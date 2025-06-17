@@ -9,14 +9,14 @@ import { RolesGuard } from 'src/guards/roles.guard';
 
 @ApiTags('users')
 @Controller('users')
-// @UseGuards(JwtAuthGuard, RolesGuard)
-// @ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @ApiOperation({ summary: 'Créer un utilisateur' })
-  // @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN)
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
