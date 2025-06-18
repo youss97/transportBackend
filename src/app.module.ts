@@ -10,6 +10,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule } from '@nestjs/config';
 import { ReportsModule } from './reports/reports.module';
+import { CompaniesModule } from './companies/companies.module';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { ReportsModule } from './reports/reports.module';
       isGlobal: true,
     }),
     MongooseModule.forRoot(
-      process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/transport-mvp',
+      process.env.MONGODB_URI,
     ),
 
     ThrottlerModule.forRoot([
@@ -33,6 +34,8 @@ import { ReportsModule } from './reports/reports.module';
     ]),
 
     ReportsModule,
+
+    CompaniesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

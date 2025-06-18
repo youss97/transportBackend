@@ -31,6 +31,14 @@ export class CreateActivityDto {
   @IsString()
   vehicleId: string;
 
+  @ApiProperty()
+  @IsString()
+  driverId: string; 
+
+  @ApiProperty()
+  @IsString()
+  companyId: string;
+
   @ApiProperty({ enum: ActivityType })
   @IsEnum(ActivityType)
   type: ActivityType;

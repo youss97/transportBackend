@@ -14,19 +14,19 @@ export class ActivitiesService {
     private vehiclesService: VehiclesService,
   ) {}
 
-  async create(userId: string, createActivityDto: CreateActivityDto): Promise<Activity> {
+  async create(userId: string, createActivityDto: CreateActivityDto,companyId:string): Promise<Activity> {
     const vehicle = await this.vehiclesService.findOne(createActivityDto.vehicleId);
     
     const activity = new this.activityModel({
       ...createActivityDto,
       driver: userId,
+      company: companyId,
       vehicle: createActivityDto.vehicleId,
       timestamp: createActivityDto.timestamp || new Date(),
     });
 
     const savedActivity = await activity.save();
 
-    // Mettre à jour le kilométrage du véhicule si fourni
     if (createActivityDto.kilometers) {
       await this.vehiclesService.updateKilometers(
         createActivityDto.vehicleId, 
@@ -62,8 +62,8 @@ export class ActivitiesService {
       .exec();
   }
 
-  async findPendingValidation(): Promise<Activity[]> {
-    return this.activityModel.find({ validated: false })
+  async findPendingValidation(companyId:string): Promise<Activity[]> {
+    return this.activityModel.find({ validated: false,company: companyId })
       .sort({ timestamp: -1 })
       .populate([
         { path: 'driver', select: 'firstName lastName' },

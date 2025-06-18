@@ -22,6 +22,7 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
 import { Roles } from 'src/decorators/roles.decorator';
+import { CurrentCompany } from 'src/decorators/company.decorator';
 
 @ApiTags('activities')
 @Controller('activities')
@@ -36,8 +37,9 @@ export class ActivitiesController {
   create(
     @CurrentUser() user: any,
     @Body() createActivityDto: CreateActivityDto,
+    @CurrentCompany() companyId: string
   ) {
-    return this.activitiesService.create(user.userId, createActivityDto);
+    return this.activitiesService.create(user.userId, createActivityDto,companyId);
   }
 
   @Get('my-activities')
@@ -51,8 +53,8 @@ export class ActivitiesController {
   @Get('pending')
   @ApiOperation({ summary: 'Activités en attente de validation' })
   @Roles(UserRole.SUPERVISOR, UserRole.ADMIN)
-  getPendingActivities() {
-    return this.activitiesService.findPendingValidation();
+  getPendingActivities(@CurrentCompany() companyId: string) {
+    return this.activitiesService.findPendingValidation(companyId);
   }
 
   @Get('driver/:driverId')

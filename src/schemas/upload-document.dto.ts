@@ -10,14 +10,27 @@ export class UploadDocumentDto {
   type: string;
 
   @ApiProperty()
+  @IsOptional()
   @IsString()
   vehicleId: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsString()
   activityId?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsString()
   expirationDate?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  owner: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  companyId: string;
 }

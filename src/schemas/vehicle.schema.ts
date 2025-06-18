@@ -1,44 +1,46 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { VehicleStatus } from 'src/enums/vehicle-status.enum';
 
 @Schema({ timestamps: true })
 export class Vehicle extends Document {
-  @Prop({ required: true, unique: true })
+  // AJOUT CRUCIAL : ID de la société
+  @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
+  company: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  currentDriver?: Types.ObjectId;
+
+  @Prop({ required: true })
   licensePlate: string;
 
-  @Prop()
+  @Prop({ required: true })
   brand: string;
 
-  @Prop()
-  carModel: string;
+  @Prop({ required: true })
+  modelCar: string;
 
-  @Prop()
+  @Prop({ required: true })
   year: number;
 
-  @Prop({ required: true, enum: VehicleStatus, default: VehicleStatus.AVAILABLE })
-  status: VehicleStatus;
+  @Prop({ required: true })
+  fuelType: string;
 
-  @Prop({ required: true, default: 0 })
-  totalKilometers: number;
+  @Prop({ default: 'disponible' })
+  status: string;
 
-  @Prop({ required: true, default: 0 })
+  @Prop({ default: 0 })
   maintenanceKilometers: number;
 
-  @Prop()
-  insuranceStartDate: Date;
-
-  @Prop()
-  insuranceEndDate: Date;
-
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  currentDriver: Types.ObjectId;
-
-  @Prop({ default: Date.now })
-  lastMaintenanceDate: Date;
-
-  @Prop({ default: 30000 })
+  @Prop({ default: 15000 })
   nextMaintenanceKm: number;
+
+  @Prop()
+  insuranceExpirationDate: Date;
+
+  @Prop()
+  technicalControlDate: Date;
+
+  @Prop({ default: true })
+  isActive: boolean;
 }
 
 export const VehicleSchema = SchemaFactory.createForClass(Vehicle);

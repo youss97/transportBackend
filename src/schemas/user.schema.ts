@@ -1,24 +1,27 @@
-// src/users/schemas/user.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { UserRole } from 'src/enums/user-role.enum';
 
 @Schema({ timestamps: true })
 export class User extends Document {
-  @Prop({ required: true })
-  email: string;
-
-  @Prop({ required: true })
-  password: string;
-
   @Prop({ required: true })
   firstName: string;
 
   @Prop({ required: true })
   lastName: string;
 
+  @Prop({ required: true, unique: true })
+  email: string;
+
+  @Prop({ required: true })
+  password: string;
+
   @Prop({ required: true, enum: UserRole })
   role: UserRole;
+
+  // AJOUT CRUCIAL : ID de la société
+  @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
+  company: Types.ObjectId;
 
   @Prop()
   phone: string;
@@ -27,26 +30,16 @@ export class User extends Document {
   address: string;
 
   @Prop()
-  birthDate: Date;
+  licenseNumber: string;
 
   @Prop()
-  profilePhoto: string;
-
-  @Prop()
-  idDocument: string;
+  licenseExpirationDate: Date;
 
   @Prop({ default: true })
   isActive: boolean;
 
-  // Spécifique aux chauffeurs
   @Prop()
-  drivingLicense: string;
-
-  @Prop([String])
-  safetyDiplomas: string[];
-
-  @Prop({ default: 0 })
-  performanceScore: number;
+  lastLogin: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

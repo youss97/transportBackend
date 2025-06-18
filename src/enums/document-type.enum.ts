@@ -7,4 +7,5 @@ export enum DocumentType {
   WEIGHING_TICKET = 'bon_pesage',
   FUEL_RECEIPT = 'facture_carburant',
   INCIDENT_REPORT = 'rapport_incident',
+  COMPANY_LOGO='logo'
 }
