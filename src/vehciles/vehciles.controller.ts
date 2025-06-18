@@ -7,6 +7,7 @@ import {
   Patch,
   UseGuards,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
@@ -28,20 +29,23 @@ export class VehiclesController {
   @Post()
   @ApiOperation({ summary: 'Créer un véhicule' })
   @Roles(UserRole.ADMIN)
-  create(@Body() createVehicleDto: CreateVehicleDto, @CurrentCompany() companyId: string) {
-    return this.vehiclesService.create(createVehicleDto,companyId);
+  create(
+    @Body() createVehicleDto: CreateVehicleDto,
+    @CurrentCompany() companyId: string,
+  ) {
+    return this.vehiclesService.create(createVehicleDto, companyId);
   }
 
   @Get()
   @ApiOperation({ summary: 'Lister tous les véhicules' })
-  findAll( @CurrentCompany() companyId: string) {
+  findAll(@CurrentCompany() companyId: string) {
     return this.vehiclesService.findAll(companyId);
   }
 
   @Get('maintenance')
   @ApiOperation({ summary: 'Véhicules nécessitant une maintenance' })
   @Roles(UserRole.MECHANIC, UserRole.SUPERVISOR, UserRole.ADMIN)
-  getMaintenanceNeeded( @CurrentCompany() companyId: string) {
+  getMaintenanceNeeded(@CurrentCompany() companyId: string) {
     return this.vehiclesService.getVehiclesNeedingMaintenance(companyId);
   }
 
@@ -54,18 +58,21 @@ export class VehiclesController {
   @Patch(':id/assign/:driverId')
   @ApiOperation({ summary: 'Assigner un chauffeur à un véhicule' })
   @Roles(UserRole.SUPERVISOR, UserRole.ADMIN)
-  assignDriver(@Param('id') id: string, @Param('driverId') driverId: string, @CurrentCompany() companyId: string) {
-    return this.vehiclesService.assignDriver(id, driverId,companyId);
+  assignDriver(
+    @Param('id') id: string,
+    @Param('driverId') driverId: string,
+    @CurrentCompany() companyId: string,
+  ) {
+    return this.vehiclesService.assignDriver(id, driverId, companyId);
   }
 
-  
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer un véhicule' })
   @Roles(UserRole.ADMIN)
   deleteVehicle(@Param('id') id: string, @CurrentCompany() companyId: string) {
     return this.vehiclesService.deleteVehicle(id, companyId);
   }
-    @Patch(':id/unassign')
+  @Patch(':id/unassign')
   @ApiOperation({ summary: 'Désassigner le chauffeur du véhicule' })
   @Roles(UserRole.SUPERVISOR, UserRole.ADMIN)
   unassignDriver(@Param('id') id: string, @CurrentCompany() companyId: string) {
@@ -75,8 +82,28 @@ export class VehiclesController {
   @Patch(':id')
   @ApiOperation({ summary: 'Mettre à jour un véhicule' })
   @Roles(UserRole.ADMIN)
-  updateVehicle(@Param('id') id: string, @Body() updateData: Partial<CreateVehicleDto>, @CurrentCompany() companyId: string) {
+  updateVehicle(
+    @Param('id') id: string,
+    @Body() updateData: Partial<CreateVehicleDto>,
+    @CurrentCompany() companyId: string,
+  ) {
     return this.vehiclesService.updateVehicle(id, companyId, updateData);
   }
-
+  @Get('search')
+  @ApiOperation({
+    summary: 'Rechercher des véhicules par immatriculation, marque ou modèle',
+  })
+  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+  searchVehicles(
+    @CurrentCompany() companyId: string,
+    @Query('licensePlate') licensePlate?: string,
+    @Query('brand') brand?: string,
+    @Query('modelCar') modelCar?: string,
+  ) {
+    return this.vehiclesService.searchVehicles(companyId, {
+      licensePlate,
+      brand,
+      modelCar,
+    });
+  }
 }

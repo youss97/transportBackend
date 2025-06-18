@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 import { CompaniesService } from './companies.service';
@@ -9,8 +19,6 @@ import { RolesGuard } from 'src/guards/roles.guard';
 import { CreateCompanyDto } from 'src/schemas/create-company.dto';
 import { UpdateCompanyDto } from 'src/schemas/update-company.dto';
 
-
-
 @ApiTags('companies')
 @Controller('companies')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -20,7 +28,7 @@ export class CompaniesController {
 
   @Post()
   @ApiOperation({ summary: 'Créer une société' })
-  @Roles(UserRole.SUPER_ADMIN) 
+  @Roles(UserRole.SUPER_ADMIN)
   create(@Body() createCompanyDto: CreateCompanyDto) {
     return this.companiesService.create(createCompanyDto);
   }
@@ -33,7 +41,7 @@ export class CompaniesController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Détails d\'une société' })
+  @ApiOperation({ summary: "Détails d'une société" })
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   findOne(@Param('id') id: string) {
     return this.companiesService.findById(id);
@@ -58,5 +66,13 @@ export class CompaniesController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   getStats(@Param('id') id: string) {
     return this.companiesService.getCompanyStats(id);
+  }
+  @Get('search/by-name')
+  @ApiOperation({
+    summary: 'Rechercher une société par nom (partiel ou complet)',
+  })
+  @Roles(UserRole.SUPER_ADMIN)
+  searchByName(@Query('name') name: string) {
+    return this.companiesService.searchByName(name);
   }
 }

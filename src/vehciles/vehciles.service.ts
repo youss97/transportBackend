@@ -37,7 +37,7 @@ export class VehiclesService {
     return vehicle.save();
   }
 
-  async findAll(companyId:string): Promise<Vehicle[]> {
+  async findAll(companyId: string): Promise<Vehicle[]> {
     return this.vehicleModel
       .find({
         company: companyId,
@@ -58,7 +58,11 @@ export class VehiclesService {
     return vehicle;
   }
 
-  async assignDriver(vehicleId: string, driverId: string,companyId:string): Promise<Vehicle> {
+  async assignDriver(
+    vehicleId: string,
+    driverId: string,
+    companyId: string,
+  ): Promise<Vehicle> {
     const vehicle = await this.vehicleModel
       .findByIdAndUpdate(
         vehicleId,
@@ -99,7 +103,7 @@ export class VehiclesService {
     return vehicle;
   }
 
-  async getVehiclesNeedingMaintenance(companyId:string): Promise<Vehicle[]> {
+  async getVehiclesNeedingMaintenance(companyId: string): Promise<Vehicle[]> {
     return this.vehicleModel
       .find({
         company: companyId,
@@ -109,14 +113,14 @@ export class VehiclesService {
       })
       .exec();
   }
-   async unassignDriver(vehicleId: string, companyId: string): Promise<Vehicle> {
+  async unassignDriver(vehicleId: string, companyId: string): Promise<Vehicle> {
     const vehicle = await this.vehicleModel.findOneAndUpdate(
       { _id: vehicleId, company: companyId },
       {
         $unset: { currentDriver: '' },
-        status: VehicleStatus.AVAILABLE
+        status: VehicleStatus.AVAILABLE,
       },
-      { new: true }
+      { new: true },
     );
 
     if (!vehicle) {
@@ -126,11 +130,15 @@ export class VehiclesService {
     return vehicle;
   }
 
-  async updateVehicle(id: string, companyId: string, updateData: Partial<CreateVehicleDto>): Promise<Vehicle> {
+  async updateVehicle(
+    id: string,
+    companyId: string,
+    updateData: Partial<CreateVehicleDto>,
+  ): Promise<Vehicle> {
     const vehicle = await this.vehicleModel.findOneAndUpdate(
       { _id: id, company: companyId },
       updateData,
-      { new: true }
+      { new: true },
     );
 
     if (!vehicle) {
@@ -140,13 +148,45 @@ export class VehiclesService {
     return vehicle;
   }
 
-  async deleteVehicle(id: string, companyId: string): Promise<{ deleted: boolean }> {
-    const res = await this.vehicleModel.deleteOne({ _id: id, company: companyId });
+  async deleteVehicle(
+    id: string,
+    companyId: string,
+  ): Promise<{ deleted: boolean }> {
+    const res = await this.vehicleModel.deleteOne({
+      _id: id,
+      company: companyId,
+    });
 
     if (res.deletedCount === 0) {
       throw new NotFoundException('Véhicule non trouvé ou accès refusé');
     }
 
     return { deleted: true };
+  }
+  async searchVehicles(
+    companyId: string,
+    filters: { licensePlate?: string; brand?: string; modelCar?: string },
+  ): Promise<Vehicle[]> {
+    const query: any = {
+      company: companyId,
+      isActive: true,
+    };
+
+    if (filters.licensePlate) {
+      query.licensePlate = { $regex: filters.licensePlate, $options: 'i' };
+    }
+
+    if (filters.brand) {
+      query.brand = { $regex: filters.brand, $options: 'i' };
+    }
+
+    if (filters.modelCar) {
+      query.modelCar = { $regex: filters.modelCar, $options: 'i' };
+    }
+
+    return this.vehicleModel
+      .find(query)
+      .populate('currentDriver', 'firstName lastName')
+      .exec();
   }
 }

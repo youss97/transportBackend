@@ -172,4 +172,29 @@ export class UsersService {
       .select('-password')
       .exec();
   }
+
+  async searchUsers(
+  companyId: string,
+  filters: { firstName?: string; lastName?: string; role?: string }
+): Promise<User[]> {
+  const query: any = {
+    company: companyId,
+    isActive: true,
+  };
+
+  if (filters.firstName) {
+    query.firstName = { $regex: filters.firstName, $options: 'i' }; 
+  }
+
+  if (filters.lastName) {
+    query.lastName = { $regex: filters.lastName, $options: 'i' };
+  }
+
+  if (filters.role) {
+    query.role = filters.role;
+  }
+
+  return this.userModel.find(query).select('-password').exec();
+}
+
 }

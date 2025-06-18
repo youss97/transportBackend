@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DocumentEntity } from '../schemas/document.schema';
@@ -13,40 +17,43 @@ export class DocumentsService {
     private documentModel: Model<DocumentEntity>,
   ) {}
 
- async uploadDocument(
-  file: Express.Multer.File,
-  type: DocumentType,
-  companyId?: string,
-  ownerId?: string,
-  vehicleId?: string,
-  activityId?: string,
-  expirationDate?: Date
-): Promise<DocumentEntity> {
-  if (type === DocumentType.COMPANY_LOGO && !companyId) {
-    throw new BadRequestException('Le logo de société doit avoir un companyId.');
+  async uploadDocument(
+    file: Express.Multer.File,
+    type: DocumentType,
+    companyId?: string,
+    ownerId?: string,
+    vehicleId?: string,
+    activityId?: string,
+    expirationDate?: Date,
+  ): Promise<DocumentEntity> {
+    if (type === DocumentType.COMPANY_LOGO && !companyId) {
+      throw new BadRequestException(
+        'Le logo de société doit avoir un companyId.',
+      );
+    }
+
+    if (type !== DocumentType.COMPANY_LOGO && companyId) {
+      throw new BadRequestException(
+        'companyId ne peut être utilisé que pour un logo de société.',
+      );
+    }
+
+    const document = new this.documentModel({
+      fileName: file.filename,
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size,
+      path: file.path,
+      type,
+      company: companyId,
+      owner: ownerId,
+      vehicle: vehicleId,
+      activity: activityId,
+      expirationDate,
+    });
+
+    return document.save();
   }
-
-  if (type !== DocumentType.COMPANY_LOGO && companyId) {
-    throw new BadRequestException('companyId ne peut être utilisé que pour un logo de société.');
-  }
-
-  const document = new this.documentModel({
-    fileName: file.filename,
-    originalName: file.originalname,
-    mimeType: file.mimetype,
-    size: file.size,
-    path: file.path,
-    type,
-    company: companyId,
-    owner: ownerId,
-    vehicle: vehicleId,
-    activity: activityId,
-    expirationDate,
-  });
-
-  return document.save();
-}
-
 
   async findByOwner(ownerId: string): Promise<DocumentEntity[]> {
     return this.documentModel.find({ owner: ownerId }).exec();
@@ -96,5 +103,17 @@ export class DocumentsService {
     }
 
     await this.documentModel.findByIdAndDelete(id).exec();
+  }
+
+  async findByTypeAndUser(
+    type: DocumentType,
+    userId: string,
+  ): Promise<DocumentEntity> {
+    return this.documentModel
+      .findOne({
+        type,
+        owner: userId,
+      })
+      .exec();
   }
 }

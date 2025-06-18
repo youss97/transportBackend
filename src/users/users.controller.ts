@@ -7,6 +7,7 @@ import {
   UseGuards,
   Put,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -17,11 +18,11 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { UpdateUserDto } from 'src/schemas/update-user.dto';
 import { CurrentCompany } from 'src/decorators/company.decorator';
-import { CompanyAccessGuard } from 'src/guards/company-access.guard'; 
+import { CompanyAccessGuard } from 'src/guards/company-access.guard';
 
 @ApiTags('users')
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard, CompanyAccessGuard) 
+@UseGuards(JwtAuthGuard, RolesGuard, CompanyAccessGuard)
 @ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -29,29 +30,32 @@ export class UsersController {
   @Post()
   @ApiOperation({ summary: 'Créer un utilisateur' })
   @Roles(UserRole.ADMIN)
-  create(@Body() createUserDto: CreateUserDto, @CurrentCompany() companyId: string) {
-    return this.usersService.create(createUserDto, companyId); 
+  create(
+    @Body() createUserDto: CreateUserDto,
+    @CurrentCompany() companyId: string,
+  ) {
+    return this.usersService.create(createUserDto, companyId);
   }
 
   @Get()
   @ApiOperation({ summary: 'Lister tous les utilisateurs' })
   @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
   findAll(@CurrentCompany() companyId: string) {
-    return this.usersService.findAll(companyId); 
+    return this.usersService.findAll(companyId);
   }
 
   @Get('drivers')
   @ApiOperation({ summary: 'Lister tous les chauffeurs' })
   @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
   findDrivers(@CurrentCompany() companyId: string) {
-    return this.usersService.findDriversByCompany(companyId); 
+    return this.usersService.findDriversByCompany(companyId);
   }
 
   @Get('role/:role')
   @ApiOperation({ summary: 'Lister les utilisateurs par rôle' })
   @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
   findByRole(@Param('role') role: string, @CurrentCompany() companyId: string) {
-    return this.usersService.findUsersByRole(companyId, role); 
+    return this.usersService.findUsersByRole(companyId, role);
   }
 
   @Get('stats')
@@ -61,7 +65,7 @@ export class UsersController {
     const totalUsers = await this.usersService.countUsersByCompany(companyId);
     const drivers = await this.usersService.findDriversByCompany(companyId);
     const admins = await this.usersService.findAdminsByCompany(companyId);
-    
+
     return {
       totalUsers,
       totalDrivers: drivers.length,
@@ -79,22 +83,22 @@ export class UsersController {
   @ApiOperation({ summary: 'Mettre à jour un utilisateur' })
   @Roles(UserRole.ADMIN)
   update(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-    @CurrentCompany() companyId: string
+    @CurrentCompany() companyId: string,
   ) {
-    return this.usersService.update(id, updateUserDto, companyId); 
+    return this.usersService.update(id, updateUserDto, companyId);
   }
 
   @Put(':id/performance')
   @ApiOperation({ summary: 'Mettre à jour le score de performance' })
   @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
   updatePerformance(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body('score') score: number,
-    @CurrentCompany() companyId: string
+    @CurrentCompany() companyId: string,
   ) {
-    return this.usersService.updatePerformanceScore(id, score, companyId); 
+    return this.usersService.updatePerformanceScore(id, score, companyId);
   }
 
   @Delete(':id')
@@ -102,5 +106,23 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Get('search')
+  @ApiOperation({
+    summary: 'Rechercher des utilisateurs par nom, prénom et rôle',
+  })
+  @Roles(UserRole.ADMIN)
+  searchUsers(
+    @CurrentCompany() companyId: string,
+    @Query('firstName') firstName?: string,
+    @Query('lastName') lastName?: string,
+    @Query('role') role?: string,
+  ) {
+    return this.usersService.searchUsers(companyId, {
+      firstName,
+      lastName,
+      role,
+    });
   }
 }

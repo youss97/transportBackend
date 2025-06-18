@@ -124,4 +124,13 @@ export class DocumentsController {
   deleteDocument(@Param('id') id: string) {
     return this.documentsService.deleteDocument(id);
   }
+
+  @Get('by-type')
+  @ApiOperation({ summary: 'Lister les documents par type et par utilisateur' })
+  findByTypeAndUser(
+    @Query('type') type: DocumentType,
+    @Query('userId') userId: string,
+  ) {
+    return this.documentsService.findByTypeAndUser(type, userId);
+  }
 }
