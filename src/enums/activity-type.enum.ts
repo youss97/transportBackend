@@ -6,4 +6,6 @@ export enum ActivityType {
   UNLOADING = 'dechargement',
   FUEL = 'carburant',
   INCIDENT = 'incident',
+  BREAK_START = 'pause_debut',    // 🔴 début de pause
+  BREAK_END = 'pause_fin'         // 🟢 fin de pause
 }
