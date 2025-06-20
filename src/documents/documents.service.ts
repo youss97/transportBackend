@@ -6,15 +6,15 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DocumentEntity } from '../schemas/document.schema';
-import * as path from 'path';
-import * as fs from 'fs';
 import { DocumentType } from 'src/enums/document-type.enum';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class DocumentsService {
   constructor(
     @InjectModel(DocumentEntity.name)
-    private documentModel: Model<DocumentEntity>,
+    private readonly documentModel: Model<DocumentEntity>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async uploadDocument(
@@ -26,6 +26,11 @@ export class DocumentsService {
     activityId?: string,
     expirationDate?: Date,
   ): Promise<DocumentEntity> {
+    if (!file) {
+      throw new BadRequestException('Aucun fichier fourni');
+    }
+
+    // Valider le type de document et les champs associés
     if (type === DocumentType.COMPANY_LOGO && !companyId) {
       throw new BadRequestException(
         'Le logo de société doit avoir un companyId.',
@@ -38,12 +43,14 @@ export class DocumentsService {
       );
     }
 
+    const cloudinaryRes = await this.cloudinaryService.uploadFile(file);
+
     const document = new this.documentModel({
-      fileName: file.filename,
+      fileName: cloudinaryRes.public_id,
       originalName: file.originalname,
       mimeType: file.mimetype,
       size: file.size,
-      path: file.path,
+      path: cloudinaryRes.secure_url,
       type,
       company: companyId,
       owner: ownerId,
@@ -55,26 +62,21 @@ export class DocumentsService {
     return document.save();
   }
 
-  async findByOwner(ownerId: string): Promise<DocumentEntity[]> {
-    return this.documentModel.find({ owner: ownerId }).exec();
-  }
+  async deleteDocument(id: string): Promise<void> {
+    const document = await this.documentModel.findById(id).exec();
+    if (!document) {
+      throw new NotFoundException('Document non trouvé');
+    }
 
-  async findByVehicle(vehicleId: string): Promise<DocumentEntity[]> {
-    return this.documentModel.find({ vehicle: vehicleId }).exec();
-  }
+    try {
+      await this.cloudinaryService.deleteFile(document.fileName);
+    } catch (err) {
+      console.warn(
+        `Erreur lors de la suppression sur Cloudinary : ${err.message}`,
+      );
+    }
 
-  async findExpiringSoon(days: number = 30): Promise<DocumentEntity[]> {
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + days);
-
-    return this.documentModel
-      .find({
-        expirationDate: { $lte: futureDate, $gte: new Date() },
-        isValid: true,
-      })
-      .populate('owner', 'firstName lastName')
-      .populate('vehicle', 'licensePlate')
-      .exec();
+    await this.documentModel.findByIdAndDelete(id).exec();
   }
 
   async getDocument(
@@ -91,18 +93,27 @@ export class DocumentsService {
     };
   }
 
-  async deleteDocument(id: string): Promise<void> {
-    const document = await this.documentModel.findById(id).exec();
-    if (!document) {
-      throw new NotFoundException('Document non trouvé');
-    }
+  async findByOwner(ownerId: string): Promise<DocumentEntity[]> {
+    return this.documentModel.find({ owner: ownerId }).exec();
+  }
 
-    // Supprimer le fichier physique
-    if (fs.existsSync(document.path)) {
-      fs.unlinkSync(document.path);
-    }
+  async findByVehicle(vehicleId: string): Promise<DocumentEntity[]> {
+    return this.documentModel.find({ vehicle: vehicleId }).exec();
+  }
 
-    await this.documentModel.findByIdAndDelete(id).exec();
+  async findExpiringSoon(days: number = 30): Promise<DocumentEntity[]> {
+    const now = new Date();
+    const future = new Date();
+    future.setDate(future.getDate() + days);
+
+    return this.documentModel
+      .find({
+        expirationDate: { $gte: now, $lte: future },
+        isValid: true,
+      })
+      .populate('owner', 'firstName lastName')
+      .populate('vehicle', 'licensePlate')
+      .exec();
   }
 
   async findByTypeAndUser(

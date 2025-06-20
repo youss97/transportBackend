@@ -19,7 +19,7 @@ import {
   ApiConsumes,
 } from '@nestjs/swagger';
 import { Response } from 'express';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { extname } from 'path';
 import { DocumentsService } from './documents.service';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
@@ -42,17 +42,7 @@ export class DocumentsController {
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            file.fieldname + '-' + uniqueSuffix + extname(file.originalname),
-          );
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (req, file, cb) => {
         if (file.mimetype.match(/\/(jpg|jpeg|png|gif|pdf)$/)) {
           cb(null, true);
