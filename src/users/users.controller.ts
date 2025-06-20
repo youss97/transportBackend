@@ -75,8 +75,8 @@ export class UsersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtenir un utilisateur par ID' })
-  findOne(@Param('id') id: string, @CurrentCompany() companyId: string) {
-    return this.usersService.findOne(id, companyId); // PASSAGE DU COMPANY_ID
+  findOne(@Param('id') id: string) {
+    return this.usersService.findOne(id); 
   }
 
   @Put(':id')

@@ -45,11 +45,10 @@ export class UsersService {
       .exec();
   }
 
-  async findOne(id: string, companyId: string): Promise<User> {
+  async findOne(id: string): Promise<User> {
     const user = await this.userModel
       .findOne({ 
-        _id: id, 
-        company: companyId 
+        _id: id
       })
       .select('-password')
       .populate('company', 'name slug')

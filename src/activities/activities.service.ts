@@ -191,4 +191,24 @@ export class ActivitiesService {
       breaks,
     };
   }
+
+  async hasActivityToday(
+  driverId: string,
+  type: ActivityType,
+): Promise<boolean> {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const exists = await this.activityModel.exists({
+    driver: driverId,
+    type,
+    timestamp: { $gte: startOfDay, $lte: endOfDay },
+  });
+
+  return !!exists;
+}
+
 }

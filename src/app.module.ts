@@ -11,6 +11,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule } from '@nestjs/config';
 import { ReportsModule } from './reports/reports.module';
 import { CompaniesModule } from './companies/companies.module';
+import { CompanySettingsModule } from './company-settings/company-settings.module';
 
 @Module({
   imports: [
@@ -36,6 +37,8 @@ import { CompaniesModule } from './companies/companies.module';
     ReportsModule,
 
     CompaniesModule,
+
+    CompanySettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

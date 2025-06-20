@@ -23,6 +23,7 @@ import { RolesGuard } from 'src/guards/roles.guard';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
 import { Roles } from 'src/decorators/roles.decorator';
 import { CurrentCompany } from 'src/decorators/company.decorator';
+import { ActivityType } from 'src/enums/activity-type.enum';
 
 @ApiTags('activities')
 @Controller('activities')
@@ -37,9 +38,13 @@ export class ActivitiesController {
   create(
     @CurrentUser() user: any,
     @Body() createActivityDto: CreateActivityDto,
-    @CurrentCompany() companyId: string
+    @CurrentCompany() companyId: string,
   ) {
-    return this.activitiesService.create(user.userId, createActivityDto,companyId);
+    return this.activitiesService.create(
+      user.userId,
+      createActivityDto,
+      companyId,
+    );
   }
 
   @Get('my-activities')
@@ -94,5 +99,16 @@ export class ActivitiesController {
     @Query('date') date: string,
   ) {
     return this.activitiesService.getDailyWorkHours(driverId, new Date(date));
+  }
+
+  @Get('has-activity-today')
+  @ApiOperation({ summary: 'Vérifie si une activité a été faite aujourd’hui' })
+  @Roles(UserRole.DRIVER)
+  @ApiQuery({ name: 'type', enum: ActivityType, required: true })
+  hasActivityToday(
+    @CurrentUser() user: any,
+    @Query('type') type: ActivityType,
+  ) {
+    return this.activitiesService.hasActivityToday(user.userId, type);
   }
 }
