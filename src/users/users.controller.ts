@@ -8,8 +8,15 @@ import {
   Put,
   Delete,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiConsumes,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from 'src/schemas/create-user.dto';
 import { UserRole } from 'src/enums/user-role.enum';
@@ -19,6 +26,8 @@ import { RolesGuard } from 'src/guards/roles.guard';
 import { UpdateUserDto } from 'src/schemas/update-user.dto';
 import { CurrentCompany } from 'src/decorators/company.decorator';
 import { CompanyAccessGuard } from 'src/guards/company-access.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 @ApiTags('users')
 @Controller('users')
@@ -28,13 +37,36 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @UseInterceptors(FileInterceptor('photo', { storage: memoryStorage() })) // Interceptor pour photo
   @ApiOperation({ summary: 'Créer un utilisateur' })
+  @ApiConsumes('multipart/form-data')
   @Roles(UserRole.ADMIN)
   create(
     @Body() createUserDto: CreateUserDto,
+    @UploadedFile() photo: Express.Multer.File, // Ajouter le fichier photo
     @CurrentCompany() companyId: string,
   ) {
-    return this.usersService.create(createUserDto, companyId);
+    return this.usersService.create(createUserDto, companyId, photo);
+  }
+
+  @Put(':id')
+  @UseInterceptors(FileInterceptor('photo', { storage: memoryStorage() })) // Interceptor pour photo
+  @ApiOperation({ summary: 'Mettre à jour un utilisateur' })
+  @ApiConsumes('multipart/form-data')
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() photo?: Express.Multer.File, // Ajouter le fichier photo
+    @CurrentCompany() companyId?: string,
+  ) {
+    return this.usersService.update(id, updateUserDto, companyId, photo);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Supprimer (désactiver) un utilisateur' })
+  @Roles(UserRole.ADMIN)
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(id);
   }
 
   @Get()
@@ -76,17 +108,7 @@ export class UsersController {
   @Get(':id')
   @ApiOperation({ summary: 'Obtenir un utilisateur par ID' })
   findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id); 
-  }
-
-  @Put(':id')
-  @ApiOperation({ summary: 'Mettre à jour un utilisateur' })
-  update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-    @CurrentCompany() companyId: string,
-  ) {
-    return this.usersService.update(id, updateUserDto, companyId);
+    return this.usersService.findOne(id);
   }
 
   @Put(':id/performance')
@@ -98,13 +120,6 @@ export class UsersController {
     @CurrentCompany() companyId: string,
   ) {
     return this.usersService.updatePerformanceScore(id, score, companyId);
-  }
-
-  @Delete(':id')
-  @ApiOperation({ summary: 'Supprimer (désactiver) un utilisateur' })
-  @Roles(UserRole.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
   }
 
   @Get('search')

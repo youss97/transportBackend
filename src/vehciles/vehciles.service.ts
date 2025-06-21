@@ -45,6 +45,9 @@ export class VehiclesService {
       .populate('currentDriver', 'firstName lastName')
       .exec();
   }
+  async findOneByDriver(driverId: string): Promise<Vehicle> {
+    return this.vehicleModel.findOne({ currentDriver: driverId }).exec();
+  }
 
   async findOne(id: string): Promise<Vehicle> {
     const vehicle = await this.vehicleModel

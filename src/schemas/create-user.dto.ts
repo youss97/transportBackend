@@ -37,4 +37,8 @@ export class CreateUserDto {
   @IsOptional()
   @IsDateString()
   birthDate?: string;
+
+  // Champ photo ajouté
+  @ApiProperty({ required: false, type: 'string', format: 'binary' })
+  photo?: any; // Type 'any' pour accepter un fichier
 }

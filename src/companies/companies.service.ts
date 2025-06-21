@@ -7,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
 
 import { Model } from 'mongoose';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { UserRole } from 'src/enums/user-role.enum';
 import { Company } from 'src/schemas/company.schema';
 import { CreateCompanyDto } from 'src/schemas/create-company.dto';
@@ -18,9 +19,14 @@ export class CompaniesService {
   constructor(
     @InjectModel(Company.name) private companyModel: Model<Company>,
     @InjectModel(User.name) private userModel: Model<User>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
+  async create(
+    createCompanyDto: CreateCompanyDto,
+    logoFile?: Express.Multer.File,
+    adminPhotoFile?: Express.Multer.File,
+  ): Promise<Company> {
     const { adminUser, ...companyData } = createCompanyDto;
 
     // Vérifier si une société existe déjà
@@ -38,10 +44,16 @@ export class CompaniesService {
       );
     }
 
+    // Upload du logo si un fichier est fourni
+    if (logoFile) {
+      const cloudinaryRes = await this.cloudinaryService.uploadFile(logoFile);
+      companyData.logo = cloudinaryRes.secure_url; // Enregistre l'URL du logo
+    }
+
     // Créer la société
     const createdCompany = await new this.companyModel(companyData).save();
 
-    // Vérifier si un utilisateur admin existe déjà (évite les doublons si besoin)
+    // Vérifier si un utilisateur admin existe déjà
     const existingUser = await this.userModel.findOne({
       email: adminUser.email,
       company: createdCompany._id,
@@ -64,10 +76,19 @@ export class CompaniesService {
       company: createdCompany._id,
     });
 
+    // Si une photo de l'admin est fournie, la télécharger sur Cloudinary
+    if (adminPhotoFile) {
+      const cloudinaryRes = await this.cloudinaryService.uploadFile(
+        adminPhotoFile,
+      );
+      newAdmin.photo = cloudinaryRes.secure_url; // Enregistre l'URL de la photo
+    }
+
     await newAdmin.save();
 
     return createdCompany;
   }
+
   async findAll(): Promise<Company[]> {
     return this.companyModel.find({ isActive: true }).exec();
   }
@@ -93,26 +114,54 @@ export class CompaniesService {
   async update(
     id: string,
     updateCompanyDto: UpdateCompanyDto,
+    logoFile?: Express.Multer.File, // Ajout du paramètre logoFile
   ): Promise<Company> {
-    const company = await this.companyModel
-      .findByIdAndUpdate(id, updateCompanyDto, { new: true })
-      .exec();
+    const company = await this.companyModel.findById(id).exec();
 
     if (!company) {
       throw new NotFoundException('Société non trouvée');
     }
 
-    return company;
+    // Vérifier si un nouveau logo est fourni
+    if (logoFile) {
+      // Si un logo existe déjà, le supprimer de Cloudinary
+      if (company.logo) {
+        const publicId = company.logo.split('/').pop()?.split('.')[0]; // Récupérer le publicId du logo
+        await this.cloudinaryService.deleteFile(publicId); // Supprimer l'ancien logo de Cloudinary
+      }
+
+      // Upload du nouveau logo
+      const cloudinaryRes = await this.cloudinaryService.uploadFile(logoFile);
+      updateCompanyDto.logo = cloudinaryRes.secure_url; // Mettre à jour l'URL du logo
+    }
+
+    // Mettre à jour la société avec les nouvelles informations
+    const updatedCompany = await this.companyModel
+      .findByIdAndUpdate(id, updateCompanyDto, { new: true })
+      .exec();
+
+    if (!updatedCompany) {
+      throw new NotFoundException('Société non trouvée');
+    }
+
+    return updatedCompany;
   }
 
   async delete(id: string): Promise<void> {
-    const result = await this.companyModel
-      .findByIdAndUpdate(id, { isActive: false }, { new: true })
-      .exec();
+    const company = await this.companyModel.findById(id).exec();
 
-    if (!result) {
+    if (!company) {
       throw new NotFoundException('Société non trouvée');
     }
+
+    // Si un logo existe, le supprimer de Cloudinary
+    if (company.logo) {
+      const publicId = company.logo.split('/').pop()?.split('.')[0]; // Extraire le publicId
+      await this.cloudinaryService.deleteFile(publicId); // Supprimer le logo de Cloudinary
+    }
+
+    // Désactiver la société (soft delete)
+    await this.companyModel.findByIdAndUpdate(id, { isActive: false }).exec();
   }
 
   async getCompanyStats(companyId: string) {

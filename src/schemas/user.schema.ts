@@ -19,13 +19,13 @@ export class User extends Document {
   @Prop({ required: true, enum: UserRole })
   role: UserRole;
 
-  // AJOUT CRUCIAL : ID de la société
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   company: Types.ObjectId;
 
   @Prop()
   phone: string;
-
+  @Prop()
+  birthDate: string;
   @Prop()
   address: string;
 
@@ -40,6 +40,10 @@ export class User extends Document {
 
   @Prop()
   lastLogin: Date;
+
+  // Nouveau champ pour la photo de l'utilisateur
+  @Prop({ default: null })
+  photo: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

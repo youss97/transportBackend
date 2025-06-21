@@ -17,37 +17,34 @@ export class ActivitiesService {
     private vehiclesService: VehiclesService,
   ) {}
 
-  async create(
-    userId: string,
-    createActivityDto: CreateActivityDto,
-    companyId: string,
-  ): Promise<Activity> {
-    const vehicle = await this.vehiclesService.findOne(
-      createActivityDto.vehicleId,
-    );
+async create(
+  userId: string, // ID du conducteur
+  createActivityDto: CreateActivityDto, // DTO de l'activité
+  companyId: string, // ID de la société
+): Promise<Activity> {
+  // Trouver le véhicule en fonction du conducteur
+  const vehicle = await this.vehiclesService.findOneByDriver(userId); // Recherche du véhicule associé au conducteur
 
-    const activity = new this.activityModel({
-      ...createActivityDto,
-      driver: userId,
-      company: companyId,
-      vehicle: createActivityDto.vehicleId,
-      timestamp: createActivityDto.timestamp || new Date(),
-    });
-
-    const savedActivity = await activity.save();
-
-    if (createActivityDto.kilometers) {
-      await this.vehiclesService.updateKilometers(
-        createActivityDto.vehicleId,
-        createActivityDto.kilometers,
-      );
-    }
-
-    return savedActivity.populate([
-      { path: 'driver', select: 'firstName lastName' },
-      { path: 'vehicle', select: 'licensePlate' },
-    ]);
+  if (!vehicle) {
+    throw new NotFoundException('Aucun véhicule trouvé pour ce conducteur');
   }
+
+  // Créer l'activité
+  const activity = new this.activityModel({
+    ...createActivityDto,
+    driver: userId,
+    company: companyId,
+    vehicle: vehicle._id
+  });
+
+  const savedActivity = await activity.save();
+
+
+  return savedActivity.populate([
+    { path: 'driver', select: 'firstName lastName' },
+    { path: 'vehicle', select: 'licensePlate' },
+  ]);
+}
 
   async findByDriver(
     driverId: string,

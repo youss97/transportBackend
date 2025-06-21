@@ -27,26 +27,12 @@ class LocationDto {
 }
 
 export class CreateActivityDto {
-  @ApiProperty()
-  @IsString()
-  vehicleId: string;
-
-  @ApiProperty()
-  @IsString()
-  driverId: string; 
-
-  @ApiProperty()
-  @IsString()
-  companyId: string;
 
   @ApiProperty({ enum: ActivityType })
   @IsEnum(ActivityType)
   type: ActivityType;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsDateString()
-  timestamp?: string;
+
 
   @ApiProperty({ type: LocationDto, required: false })
   @IsOptional()
