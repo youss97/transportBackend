@@ -22,7 +22,7 @@ import { CompanyAccessGuard } from 'src/guards/company-access.guard';
 
 @ApiTags('users')
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard, CompanyAccessGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -81,7 +81,6 @@ export class UsersController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Mettre à jour un utilisateur' })
-  @Roles(UserRole.ADMIN)
   update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,

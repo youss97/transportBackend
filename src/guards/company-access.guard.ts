@@ -9,17 +9,26 @@ export class CompanyAccessGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    
+
+    // Protection contre user non défini
+    if (!user) {
+      throw new ForbiddenException('Utilisateur non authentifié');
+    }
+
     if (user.role === UserRole.SUPER_ADMIN) {
       return true;
     }
-    
+
     const companyId = request.params.companyId || request.body.companyId || request.query.companyId;
-    
-    if (companyId && companyId !== user.companyId) {
-      throw new ForbiddenException('Accès refusé : données d\'une autre société');
+
+    if (!user.company) {
+      throw new ForbiddenException('Utilisateur sans société');
     }
-    
+
+    if (companyId && companyId !== user.company.toString()) {
+      throw new ForbiddenException('Accès refusé : société différente');
+    }
+
     return true;
   }
 }

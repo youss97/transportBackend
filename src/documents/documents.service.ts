@@ -29,6 +29,7 @@ export class DocumentsService {
     if (!file) {
       throw new BadRequestException('Aucun fichier fourni');
     }
+console.log("companyId",{ type, companyId });
 
     // Valider le type de document et les champs associés
     if (type === DocumentType.COMPANY_LOGO && !companyId) {

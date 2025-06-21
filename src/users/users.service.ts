@@ -51,7 +51,6 @@ export class UsersService {
         _id: id
       })
       .select('-password')
-      .populate('company', 'name slug')
       .exec();
       
     if (!user) {
