@@ -18,7 +18,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: payload.email, 
       role: payload.role,
       firstName: payload.firstName,
-      lastName: payload.lastName
+      lastName: payload.lastName,
+      company :payload.company // Assurez-vous que l'utilisateur a une société
     };
   }
 }

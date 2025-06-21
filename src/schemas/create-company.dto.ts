@@ -1,9 +1,13 @@
-import { IsString, IsEmail, IsOptional, IsNumber, IsArray, IsObject } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsString, IsEmail, IsOptional, IsNumber, IsArray, IsObject, ValidateNested } from 'class-validator';
+import { CreateUserDto } from './create-user.dto';
 
 export class CreateCompanyDto {
+    @ApiProperty()
   @IsString()
   name: string;
-
+  @ApiProperty()
   @IsString()
   slug: string;
 
@@ -11,6 +15,7 @@ export class CreateCompanyDto {
   @IsString()
   logo?: string;
 
+  @ApiProperty()
   @IsOptional()
   @IsString()
   address?: string;
@@ -19,6 +24,7 @@ export class CreateCompanyDto {
   @IsString()
   phone?: string;
 
+    @ApiProperty()
   @IsEmail()
   email: string;
 
@@ -40,4 +46,8 @@ export class CreateCompanyDto {
   @IsOptional()
   @IsNumber()
   maxVehicles?: number
+   @ApiProperty({ type: CreateUserDto })
+  @ValidateNested()
+  @Type(() => CreateUserDto)
+  adminUser: CreateUserDto;
 }

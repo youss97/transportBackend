@@ -4,23 +4,31 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcryptjs';
+
 import { Model } from 'mongoose';
+import { UserRole } from 'src/enums/user-role.enum';
 import { Company } from 'src/schemas/company.schema';
 import { CreateCompanyDto } from 'src/schemas/create-company.dto';
 import { UpdateCompanyDto } from 'src/schemas/update-company.dto';
+import { User } from 'src/schemas/user.schema';
 
 @Injectable()
 export class CompaniesService {
   constructor(
     @InjectModel(Company.name) private companyModel: Model<Company>,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
+    const { adminUser, ...companyData } = createCompanyDto;
+
+    // Vérifier si une société existe déjà
     const existingCompany = await this.companyModel.findOne({
       $or: [
-        { name: createCompanyDto.name },
-        { email: createCompanyDto.email },
-        { slug: createCompanyDto.slug },
+        { name: companyData.name },
+        { email: companyData.email },
+        { slug: companyData.slug },
       ],
     });
 
@@ -30,10 +38,36 @@ export class CompaniesService {
       );
     }
 
-    const company = new this.companyModel(createCompanyDto);
-    return company.save();
-  }
+    // Créer la société
+    const createdCompany = await new this.companyModel(companyData).save();
 
+    // Vérifier si un utilisateur admin existe déjà (évite les doublons si besoin)
+    const existingUser = await this.userModel.findOne({
+      email: adminUser.email,
+      company: createdCompany._id,
+    });
+
+    if (existingUser) {
+      throw new ConflictException(
+        'Un utilisateur avec cet email existe déjà dans cette société',
+      );
+    }
+
+    // Hacher le mot de passe
+    const hashedPassword = await bcrypt.hash(adminUser.password, 10);
+
+    // Créer l'utilisateur admin
+    const newAdmin = new this.userModel({
+      ...adminUser,
+      password: hashedPassword,
+      role: UserRole.ADMIN,
+      company: createdCompany._id,
+    });
+
+    await newAdmin.save();
+
+    return createdCompany;
+  }
   async findAll(): Promise<Company[]> {
     return this.companyModel.find({ isActive: true }).exec();
   }
@@ -90,7 +124,7 @@ export class CompaniesService {
     };
   }
   async searchByName(name: string): Promise<Company[]> {
-    const regex = new RegExp(name, 'i'); 
+    const regex = new RegExp(name, 'i');
     return this.companyModel
       .find({
         name: { $regex: regex },

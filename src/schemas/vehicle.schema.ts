@@ -18,10 +18,10 @@ export class Vehicle extends Document {
   @Prop({ required: true })
   modelCar: string;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   year: number;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   fuelType: string;
 
   @Prop({ default: 'disponible' })

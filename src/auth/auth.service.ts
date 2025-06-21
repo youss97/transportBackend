@@ -25,7 +25,8 @@ export class AuthService {
       sub: user._id, 
       role: user.role,
       firstName: user.firstName,
-      lastName: user.lastName
+      lastName: user.lastName,
+      company: user.company // Assurez-vous que l'utilisateur a une société
     };
     
     return {
@@ -36,6 +37,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        company: user.company 
       },
     };
   }

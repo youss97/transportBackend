@@ -21,14 +21,14 @@ import { UpdateCompanyDto } from 'src/schemas/update-company.dto';
 
 @ApiTags('companies')
 @Controller('companies')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
+// @UseGuards(JwtAuthGuard, RolesGuard)
+// @ApiBearerAuth()
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
   @Post()
   @ApiOperation({ summary: 'Créer une société' })
-  @Roles(UserRole.SUPER_ADMIN)
+  // @Roles(UserRole.SUPER_ADMIN)
   create(@Body() createCompanyDto: CreateCompanyDto) {
     return this.companiesService.create(createCompanyDto);
   }

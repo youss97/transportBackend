@@ -9,10 +9,11 @@ export class UploadDocumentDto {
   @IsString()
   type: string;
 
-  @ApiProperty()
+  // Ces champs sont optionnels dans Swagger et la validation
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  vehicleId: string;
+  vehicleId?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -24,13 +25,13 @@ export class UploadDocumentDto {
   @IsString()
   expirationDate?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  owner: string;
+  owner?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  companyId: string;
+  companyId?: string;
 }

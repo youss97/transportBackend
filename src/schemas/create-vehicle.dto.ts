@@ -36,7 +36,10 @@ export class CreateVehicleDto {
   @IsOptional()
   @IsDateString()
   insuranceEndDate?: string;
-
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  fuelType?: string;
   @ApiProperty({
     description: 'ID Mongo du chauffeur assigné (facultatif)',
     required: false,

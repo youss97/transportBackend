@@ -1,6 +1,10 @@
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ValidateNested } from 'class-validator';
 import { Document } from 'mongoose';
+import { CreateUserDto } from './create-user.dto';
 
 @Schema({ timestamps: true })
 export class CompanySettings extends Document {

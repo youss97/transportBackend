@@ -26,7 +26,7 @@ export class DocumentEntity extends Document {
   owner?: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Vehicle' })
-  vehicle?: Types.ObjectId;
+  vehicleId?: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Activity' })
   activity: Types.ObjectId;
@@ -37,7 +37,7 @@ export class DocumentEntity extends Document {
   @Prop({ default: true })
   isValid: boolean;
 
-  @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Company'})
   company?: Types.ObjectId; 
 }
 
