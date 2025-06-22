@@ -10,4 +10,8 @@ export enum DocumentType {
   INCIDENT_REPORT = 'rapport_incident',
   COMPANY_LOGO = 'logo',
   USER_PROFILE_PICTURE = 'photo_profil_utilisateur',
+  PAYMENT_FICHE = 'payment_fiche',
+  JOB_CONTRACT = 'job_contract',
+  MEDICAL_STOP = 'medical_stop',
+  MEDICAL_VISIT = 'medical_visit'
 }
