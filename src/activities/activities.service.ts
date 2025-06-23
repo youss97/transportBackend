@@ -8,13 +8,14 @@ import { Model } from 'mongoose';
 import { ActivityType } from 'src/enums/activity-type.enum';
 import { Activity } from 'src/schemas/activity.schema';
 import { CreateActivityDto } from 'src/schemas/create-activity.dto';
+import { DocumentEntity } from 'src/schemas/document.schema';
 import { VehiclesService } from 'src/vehciles/vehciles.service';
 
 @Injectable()
 export class ActivitiesService {
   constructor(
     @InjectModel(Activity.name) private activityModel: Model<Activity>,
-    @InjectModel(Document.name) private documentModel: Model<Document>,
+    @InjectModel(DocumentEntity.name) private documentModel: Model<DocumentEntity>,
 
     private vehiclesService: VehiclesService,
   ) {}
@@ -208,7 +209,7 @@ export class ActivitiesService {
 
     return !!exists;
   }
-  
+
   async findActivitiesWithDocuments(
     driverId: string,
     limit: number = 50,
