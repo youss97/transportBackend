@@ -14,37 +14,38 @@ import { VehiclesService } from 'src/vehciles/vehciles.service';
 export class ActivitiesService {
   constructor(
     @InjectModel(Activity.name) private activityModel: Model<Activity>,
+    @InjectModel(Document.name) private documentModel: Model<Document>,
+
     private vehiclesService: VehiclesService,
   ) {}
 
-async create(
-  userId: string, // ID du conducteur
-  createActivityDto: CreateActivityDto, // DTO de l'activité
-  companyId: string, // ID de la société
-): Promise<Activity> {
-  // Trouver le véhicule en fonction du conducteur
-  const vehicle = await this.vehiclesService.findOneByDriver(userId); // Recherche du véhicule associé au conducteur
+  async create(
+    userId: string, // ID du conducteur
+    createActivityDto: CreateActivityDto, // DTO de l'activité
+    companyId: string, // ID de la société
+  ): Promise<Activity> {
+    // Trouver le véhicule en fonction du conducteur
+    const vehicle = await this.vehiclesService.findOneByDriver(userId); // Recherche du véhicule associé au conducteur
 
-  if (!vehicle) {
-    throw new NotFoundException('Aucun véhicule trouvé pour ce conducteur');
+    if (!vehicle) {
+      throw new NotFoundException('Aucun véhicule trouvé pour ce conducteur');
+    }
+
+    // Créer l'activité
+    const activity = new this.activityModel({
+      ...createActivityDto,
+      driver: userId,
+      company: companyId,
+      vehicle: vehicle._id,
+    });
+
+    const savedActivity = await activity.save();
+
+    return savedActivity.populate([
+      { path: 'driver', select: 'firstName lastName' },
+      { path: 'vehicle', select: 'licensePlate' },
+    ]);
   }
-
-  // Créer l'activité
-  const activity = new this.activityModel({
-    ...createActivityDto,
-    driver: userId,
-    company: companyId,
-    vehicle: vehicle._id
-  });
-
-  const savedActivity = await activity.save();
-
-
-  return savedActivity.populate([
-    { path: 'driver', select: 'firstName lastName' },
-    { path: 'vehicle', select: 'licensePlate' },
-  ]);
-}
 
   async findByDriver(
     driverId: string,
@@ -190,22 +191,51 @@ async create(
   }
 
   async hasActivityToday(
-  driverId: string,
-  type: ActivityType,
-): Promise<boolean> {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
+    driverId: string,
+    type: ActivityType,
+  ): Promise<boolean> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
 
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
 
-  const exists = await this.activityModel.exists({
-    driver: driverId,
-    type,
-    timestamp: { $gte: startOfDay, $lte: endOfDay },
-  });
+    const exists = await this.activityModel.exists({
+      driver: driverId,
+      type,
+      timestamp: { $gte: startOfDay, $lte: endOfDay },
+    });
 
-  return !!exists;
-}
+    return !!exists;
+  }
+  
+  async findActivitiesWithDocuments(
+    driverId: string,
+    limit: number = 50,
+  ): Promise<any[]> {
+    const activities = await this.activityModel
+      .find({ driver: driverId })
+      .sort({ timestamp: -1 })
+      .limit(limit)
+      .populate([
+        { path: 'driver', select: 'firstName lastName' },
+        { path: 'vehicle', select: 'licensePlate' },
+      ])
+      .exec();
 
+    const results = await Promise.all(
+      activities.map(async (activity) => {
+        const documents = await this.documentModel
+          .find({ activity: activity._id })
+          .exec();
+
+        return {
+          activity,
+          documents,
+        };
+      }),
+    );
+
+    return results;
+  }
 }

@@ -111,4 +111,18 @@ export class ActivitiesController {
   ) {
     return this.activitiesService.hasActivityToday(user.userId, type);
   }
+
+  @Get('my-activities-with-documents')
+  @ApiOperation({ summary: 'Mes activités avec documents' })
+  @Roles(UserRole.DRIVER, UserRole.SUPERVISOR, UserRole.ADMIN)
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  getMyActivitiesWithDocuments(
+    @CurrentUser() user: any,
+    @Query('limit') limit?: number,
+  ) {
+    return this.activitiesService.findActivitiesWithDocuments(
+      user.userId,
+      limit,
+    );
+  }
 }
