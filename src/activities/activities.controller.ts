@@ -112,7 +112,7 @@ export class ActivitiesController {
     return this.activitiesService.hasActivityToday(user.userId, type);
   }
 
-  @Get('my-activities-with-documents')
+  @Get('my-doc-activities')
   @ApiOperation({ summary: 'Mes activités avec documents' })
   @Roles(UserRole.DRIVER, UserRole.SUPERVISOR, UserRole.ADMIN)
   @ApiQuery({ name: 'limit', required: false, type: Number })

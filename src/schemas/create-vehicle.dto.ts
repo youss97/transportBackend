@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsNumber, IsDateString, IsEnum, IsMongoId } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsDateString,
+  IsEnum,
+  IsMongoId,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { VehicleStatus } from 'src/enums/vehicle-status.enum';
 
@@ -38,7 +45,7 @@ export class CreateVehicleDto {
   insuranceEndDate?: string;
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsDateString()
+  @IsString()
   fuelType?: string;
   @ApiProperty({
     description: 'ID Mongo du chauffeur assigné (facultatif)',
