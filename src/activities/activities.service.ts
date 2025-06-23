@@ -239,4 +239,34 @@ export class ActivitiesService {
 
     return results;
   }
+
+   async findActivitiesWithDocumentsForCompany(
+    companyId: string,
+    limit: number = 50,
+  ): Promise<any[]> {
+    const activities = await this.activityModel
+      .find({ company: companyId })
+      .sort({ timestamp: -1 })
+      .limit(limit)
+      .populate([
+        { path: 'driver', select: 'firstName lastName' },
+        { path: 'vehicle', select: 'licensePlate' },
+      ])
+      .exec();
+
+    const results = await Promise.all(
+      activities.map(async (activity) => {
+        const documents = await this.documentModel
+          .find({ activity: activity._id })
+          .exec();
+
+        return {
+          activity,
+          documents,
+        };
+      }),
+    );
+
+    return results;
+  }
 }

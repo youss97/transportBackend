@@ -125,4 +125,20 @@ export class ActivitiesController {
       limit,
     );
   }
+
+  @Get('all-for-company')
+  @ApiOperation({
+    summary: 'Mes activités avec documents pour une seule société',
+  })
+  @Roles(UserRole.SUPERVISOR, UserRole.ADMIN)
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  getMyActivitiesWithDocumentsFroCompany(
+    @CurrentCompany() companyId: string,
+    @Query('limit') limit?: number,
+  ) {
+    return this.activitiesService.findActivitiesWithDocumentsForCompany(
+      companyId,
+      limit,
+    );
+  }
 }
