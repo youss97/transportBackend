@@ -175,7 +175,7 @@ export class UsersService {
     return this.userModel
       .find({
         company: companyId,
-        role: 'driver', // ou UserRole.DRIVER selon votre enum
+        role: 'chauffeur', 
         isActive: true,
       })
       .select('-password')
