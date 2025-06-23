@@ -16,6 +16,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiConsumes,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from 'src/schemas/create-user.dto';
@@ -70,11 +71,18 @@ export class UsersController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Lister tous les utilisateurs' })
-  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
-  findAll(@CurrentCompany() companyId: string) {
-    return this.usersService.findAll(companyId);
-  }
+@ApiOperation({ summary: 'Lister tous les utilisateurs avec pagination' })
+@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+@ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+@ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+findAll(
+  @CurrentCompany() companyId: string,
+  @Query('page') page = 1,
+  @Query('limit') limit = 10,
+) {
+  return this.usersService.findAll(companyId, +page, +limit);
+}
+
 
   @Get('drivers')
   @ApiOperation({ summary: 'Lister tous les chauffeurs' })

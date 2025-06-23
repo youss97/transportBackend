@@ -9,6 +9,8 @@ import * as bcrypt from 'bcryptjs';
 import { User } from 'src/schemas/user.schema';
 import { CreateUserDto } from 'src/schemas/create-user.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { Roles } from 'src/decorators/roles.decorator';
+import { UserRole } from 'src/enums/user-role.enum';
 
 @Injectable()
 export class UsersService {
@@ -108,15 +110,41 @@ export class UsersService {
     return { message: 'Utilisateur désactivé avec succès' };
   }
 
-  async findAll(companyId: string): Promise<User[]> {
-    return this.userModel
-      .find({
+  async findAll(
+    companyId: string,
+    page = 1,
+    limit = 10,
+  ): Promise<{
+    data: User[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.userModel
+        .find({
+          company: companyId,
+          isActive: true,
+        })
+        .select('-password')
+        .populate('company', 'name slug')
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.userModel.countDocuments({
         company: companyId,
         isActive: true,
-      })
-      .select('-password')
-      .populate('company', 'name slug')
-      .exec();
+      }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: string): Promise<User> {
@@ -175,7 +203,7 @@ export class UsersService {
     return this.userModel
       .find({
         company: companyId,
-        role: 'chauffeur', 
+        role: UserRole.DRIVER,
         isActive: true,
       })
       .select('-password')
