@@ -7,7 +7,8 @@ export type PointageDocument = Pointage & Document;
 export class Pointage {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   driver: Types.ObjectId;
-
+@Prop({ type: Types.ObjectId, ref: 'Company', required: true })
+  company: Types.ObjectId;
   @Prop({ type: Date })
   pointageDebut: Date;
 

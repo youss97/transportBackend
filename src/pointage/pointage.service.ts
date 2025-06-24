@@ -24,10 +24,12 @@ export class PointageService {
   async create(
     createPointageDto: CreatePointageDto,
     userId: string,
+    companyId: string,
   ): Promise<Pointage> {
     const newPointage = new this.pointageModel({
       ...createPointageDto,
       driver: new Types.ObjectId(userId),
+      company: new Types.ObjectId(companyId),
     });
     return newPointage.save();
   }
@@ -36,6 +38,15 @@ export class PointageService {
     return this.pointageModel
       .find({
         driver: new Types.ObjectId(userId),
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async findAllByCompanyId(companyId: string): Promise<Pointage[]> {
+    return this.pointageModel
+      .find({
+        company: new Types.ObjectId(companyId),
       })
       .sort({ createdAt: -1 })
       .exec();

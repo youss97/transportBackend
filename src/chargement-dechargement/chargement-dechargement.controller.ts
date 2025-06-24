@@ -27,6 +27,7 @@ import { RolesGuard } from 'src/guards/roles.guard';
 import { UpdateChargementDechargementDto } from 'src/schemas/update-chargement-dechargement.dto';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
 import { Types } from 'mongoose';
+import { CurrentCompany } from 'src/decorators/company.decorator';
 
 @ApiTags('chargement-dechargement')
 @Controller('chargement-dechargement')
@@ -44,6 +45,7 @@ export class ChargementDechargementController {
   async create(
     @Body() createDto: CreateChargementDechargementDto,
     @CurrentUser() user: any,
+    @CurrentCompany() companyId: string,
     @UploadedFiles() files: { photo?: Express.Multer.File[] },
   ) {
     const userId = user.userId;
@@ -54,7 +56,7 @@ export class ChargementDechargementController {
       );
     }
 
-    return this.chargementDechargementService.create(createDto, userId);
+    return this.chargementDechargementService.create(createDto, userId,companyId);
   }
    @Get('today')
 @ApiOperation({
@@ -73,7 +75,11 @@ async getTodayChargementDechargement(@CurrentUser() user: any) {
 
   return chargementDechargement;
 }
-
+  @Get('by-company')
+  @ApiOperation({ summary: "les chargements.. des utilisateurs d'une societe" })
+  async findAllByCompanyId(@CurrentCompany() companyId: any) {
+    return this.chargementDechargementService.findAllByCompanyId(companyId);
+  }
   @Get()
   @ApiOperation({ summary: 'Récupérer les chargements/déchargements' })
   async findAll(@CurrentUser() user: any) {

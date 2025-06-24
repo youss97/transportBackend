@@ -25,10 +25,12 @@ export class ChargementDechargementService {
   async create(
     createDto: CreateChargementDechargementDto,
     userId: string,
+    companyId: string,
   ): Promise<ChargmentDechargement> {
     const newChargementDechargement = new this.chargementDechargementModel({
       ...createDto,
       driver: new Types.ObjectId(userId),
+      company: new Types.ObjectId(companyId),
     });
     return newChargementDechargement.save();
   }
@@ -36,6 +38,14 @@ export class ChargementDechargementService {
   async findAllByUserId(userId: string): Promise<ChargmentDechargement[]> {
     return this.chargementDechargementModel
       .find({ driver: new Types.ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+  async findAllByCompanyId(
+    companyId: string,
+  ): Promise<ChargmentDechargement[]> {
+    return this.chargementDechargementModel
+      .find({ company: new Types.ObjectId(companyId) })
       .sort({ createdAt: -1 })
       .exec();
   }

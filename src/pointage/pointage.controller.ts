@@ -25,6 +25,7 @@ import { CurrentUser } from 'src/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { UpdatePointageDto } from 'src/schemas/update-pointage.dto';
+import { CurrentCompany } from 'src/decorators/company.decorator';
 @ApiTags('pointage')
 @Controller('pointage')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -44,6 +45,8 @@ export class PointageController {
   async create(
     @Body() createPointageDto: CreatePointageDto,
     @CurrentUser() user: any,
+    @CurrentCompany() companyId: string,
+
     @UploadedFiles()
     files: {
       photoSelfie?: Express.Multer.File[];
@@ -66,7 +69,7 @@ export class PointageController {
         );
     }
 
-    return this.pointageService.create(createPointageDto, userId);
+    return this.pointageService.create(createPointageDto, userId,companyId);
   }
   @Get('today')
   @ApiOperation({
@@ -89,7 +92,11 @@ export class PointageController {
     const driver = user.userId;
     return this.pointageService.findAllByUserId(driver);
   }
-
+  @Get('by-company')
+  @ApiOperation({ summary: "les pointages des utilisateurs d'une societe" })
+  async findAllByCompanyId(@CurrentCompany() companyId: any) {
+    return this.pointageService.findAllByCompanyId(companyId);
+  }
   @Get(':id')
   @ApiOperation({ summary: 'activity by id' })
   async findOne(@Param('id') id: string, @Request() req) {
@@ -143,6 +150,4 @@ export class PointageController {
     await this.pointageService.remove(id);
     return { message: 'Pointage supprimé avec succès' };
   }
-
-
 }

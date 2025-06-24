@@ -7,7 +7,8 @@ export type ChargmentDechargementDocument = ChargmentDechargement & Document;
 export class ChargmentDechargement {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   driver: Types.ObjectId;
-
+  @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
+  company: Types.ObjectId;
   @Prop({ type: Date })
   chargement: Date;
 
