@@ -265,12 +265,10 @@ async findActivitiesWithDocuments(
   };
 
   for (const activity of activities) {
-    console.log(activity)
     const documents = await this.documentModel
       .findOne({ activity: String(activity._id) })
       .sort({ createdAt: -1 })
       .exec();
-      console.log(documents);
     const generalType = this.mapToGeneralActivityType(activity.type);
     const activityDate = new Date(activity.timestamp).toISOString().split('T')[0]; // 'YYYY-MM-DD'
 

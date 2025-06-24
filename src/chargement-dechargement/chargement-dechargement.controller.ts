@@ -21,10 +21,12 @@ import {
   ApiBearerAuth,
   ApiTags,
 } from '@nestjs/swagger';
-import { CurrentUser } from 'src/decorators/current-user.decorator';
+
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { UpdateChargementDechargementDto } from 'src/schemas/update-chargement-dechargement.dto';
+import { CurrentUser } from 'src/decorators/current-user.decorator';
+import { Types } from 'mongoose';
 
 @ApiTags('chargement-dechargement')
 @Controller('chargement-dechargement')
@@ -54,6 +56,23 @@ export class ChargementDechargementController {
 
     return this.chargementDechargementService.create(createDto, userId);
   }
+   @Get('today')
+@ApiOperation({
+  summary: "Récupérer chDe d'aujourd'hui du conducteur",
+})
+async getTodayChargementDechargement(@CurrentUser() user: any) {
+  const driver = user.userId;
+  const chargementDechargement =
+    await this.chargementDechargementService.findTodayChargementDechargement(driver);
+
+  if (!chargementDechargement) {
+    return {
+      message: "Aucun chargement/déchargement trouvé pour aujourd'hui",
+    }; // Message explicite si rien trouvé
+  }
+
+  return chargementDechargement;
+}
 
   @Get()
   @ApiOperation({ summary: 'Récupérer les chargements/déchargements' })
@@ -96,23 +115,7 @@ export class ChargementDechargementController {
   async remove(@Param('id') id: string) {
     return this.chargementDechargementService.remove(id);
   }
-  @Get('today')
-  @ApiOperation({
-    summary: "Récupérer le chargement/déchargement d'aujourd'hui du conducteur",
-  })
-  async getTodayChargementDechargement(@CurrentUser() user: any) {
-    const driver = user.userId;
-    const chargementDechargement =
-      await this.chargementDechargementService.findTodayChargementDechargement(
-        driver,
-      );
 
-    if (!chargementDechargement) {
-      return {
-        message: "Aucun chargement/déchargement trouvé pour aujourd'hui",
-      }; // Message explicite si rien trouvé
-    }
 
-    return chargementDechargement;
-  }
+
 }
