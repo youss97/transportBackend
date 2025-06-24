@@ -6,6 +6,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ActivityType } from 'src/enums/activity-type.enum';
+import { GeneralActivityType } from 'src/enums/general-activity.enum';
 import { Activity } from 'src/schemas/activity.schema';
 import { CreateActivityDto } from 'src/schemas/create-activity.dto';
 import { DocumentEntity } from 'src/schemas/document.schema';
@@ -217,7 +218,10 @@ export class ActivitiesService {
     page = 1,
     search = '',
   ): Promise<{
-    data: any[];
+    data: {
+      activity: any;
+      documents: any[];
+    }[];
     total: number;
     page: number;
     limit: number;
@@ -251,7 +255,11 @@ export class ActivitiesService {
       activities.map(async (activity) => {
         const documents = await this.documentModel
           .find({ activity: activity._id })
+          .sort({ createdAt: -1 })
           .exec();
+
+        const generalType = this.mapToGeneralActivityType(activity.type);
+
         return { activity, documents };
       }),
     );
@@ -259,6 +267,20 @@ export class ActivitiesService {
     return { data, total, page, limit };
   }
 
+  mapToGeneralActivityType(type: string): GeneralActivityType {
+    const attendanceTypes = [
+      ActivityType.CLOCK_IN,
+       ActivityType.CLOCK_OUT,
+     ActivityType.BREAK_START,
+     ActivityType.BREAK_END,
+    ];
+    const loadingTypes = [ActivityType.LOADING, ActivityType.UNLOADING ];
+
+    if (attendanceTypes.includes(type as ActivityType)) return GeneralActivityType.ATTENDANCE;
+    if (loadingTypes.includes(type as ActivityType)) return GeneralActivityType.LOADING;
+
+    return GeneralActivityType.OTHER;
+  }
   async findActivitiesWithDocumentsForCompany(
     companyId: string,
     limit = 50,

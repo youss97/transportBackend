@@ -33,7 +33,6 @@ export class CreateActivityDto {
   type: ActivityType;
 
 
-
   @ApiProperty({ type: LocationDto, required: false })
   @IsOptional()
   @ValidateNested()
