@@ -13,5 +13,6 @@ export enum DocumentType {
   PAYMENT_FICHE = 'payment_fiche',
   JOB_CONTRACT = 'job_contract',
   MEDICAL_STOP = 'medical_stop',
-  MEDICAL_VISIT = 'medical_visit'
+  MEDICAL_VISIT = 'medical_visit',
+  SELFIE = 'selfie',
 }
