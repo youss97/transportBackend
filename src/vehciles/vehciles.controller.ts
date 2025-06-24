@@ -9,7 +9,7 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 
 import { VehiclesService } from './vehciles.service';
 import { CreateVehicleDto } from 'src/schemas/create-vehicle.dto';
@@ -36,11 +36,20 @@ export class VehiclesController {
     return this.vehiclesService.create(createVehicleDto, companyId);
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Lister tous les véhicules' })
-  findAll(@CurrentCompany() companyId: string) {
-    return this.vehiclesService.findAll(companyId);
-  }
+@Get()
+@ApiOperation({ summary: 'Lister tous les véhicules avec pagination et recherche' })
+@ApiQuery({ name: 'page', required: false, type: Number, description: 'Page actuelle (défaut: 1)' })
+@ApiQuery({ name: 'limit', required: false, type: Number, description: 'Nombre par page (défaut: 10)' })
+@ApiQuery({ name: 'search', required: false, type: String, description: 'Recherche par modelCar ou brand,licensePlate,fuelType,status' })
+findAll(
+  @CurrentCompany() companyId: string,
+  @Query('page') page = 1,
+  @Query('limit') limit = 10,
+  @Query('search') search = '',
+) {
+  return this.vehiclesService.findAll(companyId, page, limit, search);
+}
+
 
   @Get('maintenance')
   @ApiOperation({ summary: 'Véhicules nécessitant une maintenance' })
@@ -89,21 +98,21 @@ export class VehiclesController {
   ) {
     return this.vehiclesService.updateVehicle(id, companyId, updateData);
   }
-  @Get('search')
-  @ApiOperation({
-    summary: 'Rechercher des véhicules par immatriculation, marque ou modèle',
-  })
-  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
-  searchVehicles(
-    @CurrentCompany() companyId: string,
-    @Query('licensePlate') licensePlate?: string,
-    @Query('brand') brand?: string,
-    @Query('modelCar') modelCar?: string,
-  ) {
-    return this.vehiclesService.searchVehicles(companyId, {
-      licensePlate,
-      brand,
-      modelCar,
-    });
-  }
+  // @Get('search')
+  // @ApiOperation({
+  //   summary: 'Rechercher des véhicules par immatriculation, marque ou modèle',
+  // })
+  // @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+  // searchVehicles(
+  //   @CurrentCompany() companyId: string,
+  //   @Query('licensePlate') licensePlate?: string,
+  //   @Query('brand') brand?: string,
+  //   @Query('modelCar') modelCar?: string,
+  // ) {
+  //   return this.vehiclesService.searchVehicles(companyId, {
+  //     licensePlate,
+  //     brand,
+  //     modelCar,
+  //   });
+  // }
 }

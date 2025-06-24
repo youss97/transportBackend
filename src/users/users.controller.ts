@@ -70,17 +70,19 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  @Get()
-@ApiOperation({ summary: 'Lister tous les utilisateurs avec pagination' })
+@Get()
+@ApiOperation({ summary: 'Lister les utilisateurs avec pagination et recherche' })
 @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
 @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
 @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+@ApiQuery({ name: 'search', required: false, type: String, description: 'Filtrer par frstName,lastName,role,email' })
 findAll(
   @CurrentCompany() companyId: string,
   @Query('page') page = 1,
   @Query('limit') limit = 10,
+  @Query('search') search = '',
 ) {
-  return this.usersService.findAll(companyId, +page, +limit);
+  return this.usersService.findAll(companyId, +page, +limit, search);
 }
 
 
@@ -130,21 +132,21 @@ findAll(
     return this.usersService.updatePerformanceScore(id, score, companyId);
   }
 
-  @Get('search')
-  @ApiOperation({
-    summary: 'Rechercher des utilisateurs par nom, prénom et rôle',
-  })
-  @Roles(UserRole.ADMIN)
-  searchUsers(
-    @CurrentCompany() companyId: string,
-    @Query('firstName') firstName?: string,
-    @Query('lastName') lastName?: string,
-    @Query('role') role?: string,
-  ) {
-    return this.usersService.searchUsers(companyId, {
-      firstName,
-      lastName,
-      role,
-    });
-  }
+  // @Get('search')
+  // @ApiOperation({
+  //   summary: 'Rechercher des utilisateurs par nom, prénom et rôle',
+  // })
+  // @Roles(UserRole.ADMIN)
+  // searchUsers(
+  //   @CurrentCompany() companyId: string,
+  //   @Query('firstName') firstName?: string,
+  //   @Query('lastName') lastName?: string,
+  //   @Query('role') role?: string,
+  // ) {
+  //   return this.usersService.searchUsers(companyId, {
+  //     firstName,
+  //     lastName,
+  //     role,
+  //   });
+  // }
 }

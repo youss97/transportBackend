@@ -111,34 +111,53 @@ export class ActivitiesController {
   ) {
     return this.activitiesService.hasActivityToday(user.userId, type);
   }
-
   @Get('my-doc-activities')
   @ApiOperation({ summary: 'Mes activités avec documents' })
   @Roles(UserRole.DRIVER, UserRole.SUPERVISOR, UserRole.ADMIN)
+  @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Recherche par type ou fileName',
+  })
   getMyActivitiesWithDocuments(
     @CurrentUser() user: any,
-    @Query('limit') limit?: number,
+    @Query('page') page = 1,
+    @Query('limit') limit = 50,
+    @Query('search') search = '',
   ) {
     return this.activitiesService.findActivitiesWithDocuments(
       user.userId,
       limit,
+      page,
+      search,
     );
   }
 
   @Get('all-for-company')
-  @ApiOperation({
-    summary: 'Mes activités avec documents pour une seule société',
-  })
+  @ApiOperation({ summary: 'Activités avec documents pour la société' })
   @Roles(UserRole.SUPERVISOR, UserRole.ADMIN)
+  @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  getMyActivitiesWithDocumentsFroCompany(
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Recherche par type ou fileName',
+  })
+  getMyActivitiesWithDocumentsForCompany(
     @CurrentCompany() companyId: string,
-    @Query('limit') limit?: number,
+    @Query('page') page = 1,
+    @Query('limit') limit = 50,
+    @Query('search') search = '',
   ) {
     return this.activitiesService.findActivitiesWithDocumentsForCompany(
       companyId,
       limit,
+      page,
+      search,
     );
   }
 }

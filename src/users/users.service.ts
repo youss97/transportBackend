@@ -114,6 +114,7 @@ export class UsersService {
     companyId: string,
     page = 1,
     limit = 10,
+    search = '',
   ): Promise<{
     data: User[];
     total: number;
@@ -122,21 +123,29 @@ export class UsersService {
   }> {
     const skip = (page - 1) * limit;
 
+    const baseQuery: any = {
+      company: companyId,
+      isActive: true,
+    };
+
+    if (search) {
+      baseQuery.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { role: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+
     const [data, total] = await Promise.all([
       this.userModel
-        .find({
-          company: companyId,
-          isActive: true,
-        })
+        .find(baseQuery)
         .select('-password')
         .populate('company', 'name slug')
         .skip(skip)
         .limit(limit)
         .exec(),
-      this.userModel.countDocuments({
-        company: companyId,
-        isActive: true,
-      }),
+      this.userModel.countDocuments(baseQuery),
     ]);
 
     return {

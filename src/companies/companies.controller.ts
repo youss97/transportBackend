@@ -18,6 +18,7 @@ import {
   ApiOperation,
   ApiConsumes,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 
 import { CompaniesService } from './companies.service';
@@ -79,12 +80,20 @@ async create(
   return this.companiesService.create(createCompanyDto, logo, photo);
 }
 
-  @Get()
-  @ApiOperation({ summary: 'Lister toutes les sociétés' })
-  @Roles(UserRole.SUPER_ADMIN)
-  findAll() {
-    return this.companiesService.findAll();
-  }
+@Get()
+@ApiOperation({ summary: 'Lister toutes les sociétés avec pagination et recherche' })
+@ApiQuery({ name: 'page', required: false, type: Number, description: 'Numéro de la page', example: 1 })
+@ApiQuery({ name: 'limit', required: false, type: Number, description: 'Nombre d\'éléments par page', example: 10 })
+@ApiQuery({ name: 'search', required: false, type: String, description: 'Recherche par nom de société' })
+@Roles(UserRole.SUPER_ADMIN)
+findAll(
+  @Query('page') page = 1,
+  @Query('limit') limit = 10,
+  @Query('search') search = '',
+) {
+  return this.companiesService.findAll(page, limit, search);
+}
+
 
   @Get(':id')
   @ApiOperation({ summary: "Détails d'une société" })

@@ -37,14 +37,51 @@ export class VehiclesService {
     return vehicle.save();
   }
 
-  async findAll(companyId: string): Promise<Vehicle[]> {
-    return this.vehicleModel
-      .find({
-        company: companyId,
-      })
-      .populate('currentDriver', 'firstName lastName')
-      .exec();
+  async findAll(
+    companyId: string,
+    page = 1,
+    limit = 10,
+    search = '',
+  ): Promise<{
+    data: Vehicle[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    const query: any = {
+      company: companyId,
+    };
+
+    if (search) {
+      query.$or = [
+        { modelCar: { $regex: search, $options: 'i' } },
+        { brand: { $regex: search, $options: 'i' } },
+        { licensePlate: { $regex: search, $options: 'i' } },
+        { fuelType: { $regex: search, $options: 'i' } },
+        { status: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [data, total] = await Promise.all([
+      this.vehicleModel
+        .find(query)
+        .populate('currentDriver', 'firstName lastName')
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.vehicleModel.countDocuments(query),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+    };
   }
+
   async findOneByDriver(driverId: string): Promise<Vehicle> {
     return this.vehicleModel.findOne({ currentDriver: driverId }).exec();
   }

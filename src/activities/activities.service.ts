@@ -15,7 +15,8 @@ import { VehiclesService } from 'src/vehciles/vehciles.service';
 export class ActivitiesService {
   constructor(
     @InjectModel(Activity.name) private activityModel: Model<Activity>,
-    @InjectModel(DocumentEntity.name) private documentModel: Model<DocumentEntity>,
+    @InjectModel(DocumentEntity.name)
+    private documentModel: Model<DocumentEntity>,
 
     private vehiclesService: VehiclesService,
   ) {}
@@ -212,61 +213,97 @@ export class ActivitiesService {
 
   async findActivitiesWithDocuments(
     driverId: string,
-    limit: number = 50,
-  ): Promise<any[]> {
-    const activities = await this.activityModel
-      .find({ driver: driverId })
-      .sort({ timestamp: -1 })
-      .limit(limit)
-      .populate([
-        { path: 'driver', select: 'firstName lastName' },
-        { path: 'vehicle', select: 'licensePlate' },
-      ])
-      .exec();
+    limit = 50,
+    page = 1,
+    search = '',
+  ): Promise<{
+    data: any[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const skip = (page - 1) * limit;
 
-    const results = await Promise.all(
+    const query: any = { driver: driverId };
+
+    if (search) {
+      query.$or = [
+        { type: { $regex: search, $options: 'i' } },
+        { fileName: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [activities, total] = await Promise.all([
+      this.activityModel
+        .find(query)
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate([
+          { path: 'driver', select: 'firstName lastName' },
+          { path: 'vehicle', select: 'licensePlate' },
+        ])
+        .exec(),
+      this.activityModel.countDocuments(query),
+    ]);
+
+    const data = await Promise.all(
       activities.map(async (activity) => {
         const documents = await this.documentModel
           .find({ activity: activity._id })
           .exec();
-
-        return {
-          activity,
-          documents,
-        };
+        return { activity, documents };
       }),
     );
 
-    return results;
+    return { data, total, page, limit };
   }
 
-   async findActivitiesWithDocumentsForCompany(
+  async findActivitiesWithDocumentsForCompany(
     companyId: string,
-    limit: number = 50,
-  ): Promise<any[]> {
-    const activities = await this.activityModel
-      .find({ company: companyId })
-      .sort({ timestamp: -1 })
-      .limit(limit)
-      .populate([
-        { path: 'driver', select: 'firstName lastName' },
-        { path: 'vehicle', select: 'licensePlate' },
-      ])
-      .exec();
+    limit = 50,
+    page = 1,
+    search = '',
+  ): Promise<{
+    data: any[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const skip = (page - 1) * limit;
 
-    const results = await Promise.all(
+    const query: any = { company: companyId };
+
+    if (search) {
+      query.$or = [
+        { type: { $regex: search, $options: 'i' } },
+        { fileName: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [activities, total] = await Promise.all([
+      this.activityModel
+        .find(query)
+        .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate([
+          { path: 'driver', select: 'firstName lastName' },
+          { path: 'vehicle', select: 'licensePlate' },
+        ])
+        .exec(),
+      this.activityModel.countDocuments(query),
+    ]);
+
+    const data = await Promise.all(
       activities.map(async (activity) => {
         const documents = await this.documentModel
           .find({ activity: activity._id })
           .exec();
-
-        return {
-          activity,
-          documents,
-        };
+        return { activity, documents };
       }),
     );
 
-    return results;
+    return { data, total, page, limit };
   }
 }

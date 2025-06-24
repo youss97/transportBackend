@@ -89,9 +89,32 @@ export class CompaniesService {
     return createdCompany;
   }
 
-  async findAll(): Promise<Company[]> {
-    return this.companyModel.find({ isActive: true }).exec();
+ async findAll(page = 1, limit = 10, search = ''): Promise<{
+  data: Company[];
+  total: number;
+  page: number;
+  limit: number;
+}> {
+  const skip = (page - 1) * limit;
+
+  const query: any = { isActive: true };
+
+  if (search) {
+    query.name = { $regex: search, $options: 'i' }; 
   }
+
+  const [data, total] = await Promise.all([
+    this.companyModel.find(query).skip(skip).limit(limit).exec(),
+    this.companyModel.countDocuments(query),
+  ]);
+
+  return {
+    data,
+    total,
+    page,
+    limit,
+  };
+}
 
   async findById(id: string): Promise<Company> {
     const company = await this.companyModel.findById(id).exec();
