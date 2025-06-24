@@ -212,60 +212,116 @@ export class ActivitiesService {
     return !!exists;
   }
 
-  async findActivitiesWithDocuments(
-    driverId: string,
-    limit = 50,
-    page = 1,
-    search = '',
-  ): Promise<{
-    data: {
-      activity: any;
-      documents: any[];
-    }[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    const skip = (page - 1) * limit;
+async findActivitiesWithDocuments(
+  driverId: string,
+  limit = 50,
+  page = 1,
+  search = '',
+): Promise<{
+  data: Record<
+    GeneralActivityType,
+    {
+      date: string;
+      activities: {
+        activity: any;
+        documents: any[];
+        generalType: GeneralActivityType;
+      }[];
+    }[]
+  >;
+  total: number;
+  page: number;
+  limit: number;
+}> {
+  const skip = (page - 1) * limit;
 
-    const query: any = { driver: driverId };
+  const query: any = { driver: driverId };
 
-    if (search) {
-      query.$or = [
-        { type: { $regex: search, $options: 'i' } },
-        { fileName: { $regex: search, $options: 'i' } },
-      ];
+  if (search) {
+    query.$or = [
+      { type: { $regex: search, $options: 'i' } },
+      { fileName: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  const [activities, total] = await Promise.all([
+    this.activityModel
+      .find(query)
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate([
+        { path: 'driver', select: 'firstName lastName' },
+        { path: 'vehicle', select: 'licensePlate' },
+      ])
+      .exec(),
+    this.activityModel.countDocuments(query),
+  ]);
+
+  // Structure finale
+  const groupedByGeneralType: Record<GeneralActivityType, Record<string, any[]>> = {
+    [GeneralActivityType.ATTENDANCE]: {},
+    [GeneralActivityType.LOADING]: {},
+  };
+
+  for (const activity of activities) {
+    const documents = await this.documentModel
+      .find({ activity: activity._id })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    const generalType = this.mapToGeneralActivityType(activity.type);
+    const activityDate = new Date(activity.timestamp).toISOString().split('T')[0]; // 'YYYY-MM-DD'
+
+    const structured = {
+      activity,
+      documents,
+      generalType,
+    };
+
+    if (!groupedByGeneralType[generalType][activityDate]) {
+      groupedByGeneralType[generalType][activityDate] = [];
     }
 
-    const [activities, total] = await Promise.all([
-      this.activityModel
-        .find(query)
-        .sort({ timestamp: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate([
-          { path: 'driver', select: 'firstName lastName' },
-          { path: 'vehicle', select: 'licensePlate' },
-        ])
-        .exec(),
-      this.activityModel.countDocuments(query),
-    ]);
-
-    const data = await Promise.all(
-      activities.map(async (activity) => {
-        const documents = await this.documentModel
-          .find({ activity: activity._id })
-          .sort({ createdAt: -1 })
-          .exec();
-
-        const generalType = this.mapToGeneralActivityType(activity.type);
-
-        return { activity, documents };
-      }),
-    );
-
-    return { data, total, page, limit };
+    groupedByGeneralType[generalType][activityDate].push(structured);
   }
+
+  // Convert to desired output format
+  const data: Record<
+    GeneralActivityType,
+    {
+      date: string;
+      activities: {
+        activity: any;
+        documents: any[];
+        generalType: GeneralActivityType;
+      }[];
+    }[]
+  > = {
+    [GeneralActivityType.ATTENDANCE]: [],
+    [GeneralActivityType.LOADING]: [],
+  };
+
+  for (const type of Object.values(GeneralActivityType)) {
+    const dateGroups = groupedByGeneralType[type];
+    const sortedDates = Object.keys(dateGroups).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+    for (const date of sortedDates) {
+      const activities = dateGroups[date].sort((a, b) =>
+        new Date(a.activity.timestamp).getTime() - new Date(b.activity.timestamp).getTime(),
+      );
+
+      data[type].push({ date, activities });
+    }
+  }
+  return {
+    data,
+    total,
+    page,
+    limit,
+  };
+}
+
 
   mapToGeneralActivityType(type: string): GeneralActivityType {
     const attendanceTypes = [
@@ -279,7 +335,6 @@ export class ActivitiesService {
     if (attendanceTypes.includes(type as ActivityType)) return GeneralActivityType.ATTENDANCE;
     if (loadingTypes.includes(type as ActivityType)) return GeneralActivityType.LOADING;
 
-    return GeneralActivityType.OTHER;
   }
   async findActivitiesWithDocumentsForCompany(
     companyId: string,
