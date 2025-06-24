@@ -12,6 +12,8 @@ import { ConfigModule } from '@nestjs/config';
 import { ReportsModule } from './reports/reports.module';
 import { CompaniesModule } from './companies/companies.module';
 import { CompanySettingsModule } from './company-settings/company-settings.module';
+import { PointageModule } from './pointage/pointage.module';
+import { ChargementDechargementModule } from './chargement-dechargement/chargement-dechargement.module';
 
 @Module({
   imports: [
@@ -39,6 +41,10 @@ import { CompanySettingsModule } from './company-settings/company-settings.modul
     CompaniesModule,
 
     CompanySettingsModule,
+
+    PointageModule,
+
+    ChargementDechargementModule,
   ],
   controllers: [AppController],
   providers: [AppService],
