@@ -14,6 +14,7 @@ import {
 import { CreateChargementDechargementDto } from 'src/schemas/create-chargement-dechargement.dto';
 import { UpdateChargementDechargementDto } from 'src/schemas/update-chargement-dechargement.dto';
 import * as moment from 'moment';
+import { PassThrough } from 'stream';
 
 @Injectable()
 export class ChargementDechargementService {
@@ -84,24 +85,33 @@ export class ChargementDechargementService {
     return updatedChargementDechargement;
   }
 
-  async uploadPhoto(
-    file: Express.Multer.File,
-    folder: string,
-  ): Promise<string> {
-    try {
-      const result: UploadApiResponse = await cloudinary.uploader.upload(
-        file.path,
+async uploadPhoto(
+  file: Express.Multer.File,
+  folder: string,
+): Promise<string> {
+  try {
+    return await new Promise<string>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: `chargement-dechargement/${folder}`,
           resource_type: 'auto',
         },
+        (error, result: UploadApiResponse) => {
+          if (error || !result) {
+            return reject(new BadRequestException('Failed to upload photo'));
+          }
+          resolve(result.secure_url);
+        },
       );
-      return result.secure_url;
-    } catch (error) {
-      throw new BadRequestException('Failed to upload photo');
-    }
-  }
 
+      const bufferStream = new PassThrough();
+      bufferStream.end(file.buffer);
+      bufferStream.pipe(uploadStream);
+    });
+  } catch (error) {
+    throw new BadRequestException('Failed to upload photo');
+  }
+}
   async remove(id: string): Promise<void> {
     const result = await this.chargementDechargementModel
       .deleteOne({ _id: new Types.ObjectId(id) })
