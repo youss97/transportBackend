@@ -134,42 +134,49 @@ export class CompaniesService {
     return company;
   }
 
-  async update(
-    id: string,
-    updateCompanyDto: UpdateCompanyDto,
-    logoFile?: Express.Multer.File, // Ajout du paramètre logoFile
-  ): Promise<Company> {
-    const company = await this.companyModel.findById(id).exec();
+async update(
+  id: string,
+  updateCompanyDto: UpdateCompanyDto,
+  logoFile?: Express.Multer.File,
+): Promise<Company> {
+  const company = await this.companyModel.findById(id).exec();
 
-    if (!company) {
-      throw new NotFoundException('Société non trouvée');
-    }
-
-    // Vérifier si un nouveau logo est fourni
-    if (logoFile) {
-      // Si un logo existe déjà, le supprimer de Cloudinary
-      if (company.logo) {
-        const publicId = company.logo.split('/').pop()?.split('.')[0]; // Récupérer le publicId du logo
-        await this.cloudinaryService.deleteFile(publicId); // Supprimer l'ancien logo de Cloudinary
-      }
-
-      // Upload du nouveau logo
-      const cloudinaryRes = await this.cloudinaryService.uploadFile(logoFile);
-      updateCompanyDto.logo = cloudinaryRes.secure_url; // Mettre à jour l'URL du logo
-    }
-
-    // Mettre à jour la société avec les nouvelles informations
-    const updatedCompany = await this.companyModel
-      .findByIdAndUpdate(id, updateCompanyDto, { new: true })
-      .exec();
-
-    if (!updatedCompany) {
-      throw new NotFoundException('Société non trouvée');
-    }
-
-    return updatedCompany;
+  if (!company) {
+    throw new NotFoundException('Société non trouvée');
   }
 
+  // Nettoyer et préparer les données de mise à jour
+  const updateData: any = {};
+  
+  // Copier seulement les champs qui ont des valeurs valides
+  Object.keys(updateCompanyDto).forEach(key => {
+    const value = updateCompanyDto[key];
+    if (value !== undefined && value !== null && value !== '') {
+      updateData[key] = value;
+    }
+  });
+
+  // Vérifier si un nouveau logo est fourni
+  if (logoFile) {
+    if (company.logo) {
+      const publicId = company.logo.split('/').pop()?.split('.')[0];
+      await this.cloudinaryService.deleteFile(publicId);
+    }
+    const cloudinaryRes = await this.cloudinaryService.uploadFile(logoFile);
+    updateData.logo = cloudinaryRes.secure_url;
+  }
+
+  // Mettre à jour la société avec les nouvelles informations
+  const updatedCompany = await this.companyModel
+    .findByIdAndUpdate(id, updateData, { new: true })
+    .exec();
+
+  if (!updatedCompany) {
+    throw new NotFoundException('Société non trouvée');
+  }
+
+  return updatedCompany;
+}
   async delete(id: string): Promise<void> {
     const company = await this.companyModel.findById(id).exec();
 

@@ -7,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { VehicleStatus } from 'src/enums/vehicle-status.enum';
 import { CreateVehicleDto } from 'src/schemas/create-vehicle.dto';
+import { UpdateVehicleDto } from 'src/schemas/update-vehicle.dto';
 import { Vehicle } from 'src/schemas/vehicle.schema';
 
 @Injectable()
@@ -170,23 +171,46 @@ export class VehiclesService {
     return vehicle;
   }
 
-  async updateVehicle(
+ async updateVehicle(
     id: string,
     companyId: string,
-    updateData: Partial<CreateVehicleDto>,
+    updateData: UpdateVehicleDto,
   ): Promise<Vehicle> {
-    const vehicle = await this.vehicleModel.findOneAndUpdate(
-      { _id: id, company: companyId },
-      updateData,
-      { new: true },
-    );
+    // 1. Récupérer le véhicule existant
+    const existingVehicle = await this.vehicleModel.findOne({
+      _id: id,
+      company: companyId,
+    });
 
-    if (!vehicle) {
+    if (!existingVehicle) {
       throw new NotFoundException('Véhicule non trouvé ou accès refusé');
     }
 
-    return vehicle;
+    // 2. Filtrer les champs undefined/null du updateData
+    const filteredUpdateData = Object.entries(updateData).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as any);
+
+    // 3. Fusionner avec les données existantes
+    const mergedData = {
+      ...existingVehicle.toObject(),
+      ...filteredUpdateData,
+      updatedAt: new Date(), // Optionnel: mettre à jour la date de modification
+    };
+
+    // 4. Effectuer la mise à jour
+    const updatedVehicle = await this.vehicleModel.findOneAndUpdate(
+      { _id: id, company: companyId },
+      mergedData,
+      { new: true, runValidators: true },
+    );
+
+    return updatedVehicle;
   }
+
 
   async deleteVehicle(
     id: string,

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { DocumentStatus } from 'src/enums/document-status.enum';
 
 export class UploadDocumentDto {
   @ApiProperty({ type: 'string', format: 'binary' })
@@ -8,7 +9,14 @@ export class UploadDocumentDto {
   @ApiProperty()
   @IsString()
   type: string;
-
+  @ApiProperty({
+    required: false,
+    enum: DocumentStatus,
+    default: DocumentStatus.PENDING,
+  })
+  @IsOptional()
+  @IsEnum(DocumentStatus)
+  status?: DocumentStatus;
   // Ces champs sont optionnels dans Swagger et la validation
   @ApiProperty({ required: false })
   @IsOptional()

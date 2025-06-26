@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { DocumentType } from '../enums/document-type.enum';
+import { DocumentStatus } from 'src/enums/document-status.enum';
 
 @Schema({ timestamps: true, collection: 'documents' })
 export class DocumentEntity extends Document {
@@ -39,6 +40,8 @@ export class DocumentEntity extends Document {
 
   @Prop({ type: Types.ObjectId, ref: 'Company'})
   company?: Types.ObjectId; 
+    @Prop({ required: true, enum: DocumentStatus, default: DocumentStatus.PENDING }) // New status field
+  status: DocumentStatus
 }
 
 export const DocumentSchema = SchemaFactory.createForClass(DocumentEntity);

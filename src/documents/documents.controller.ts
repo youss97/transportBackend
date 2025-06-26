@@ -10,6 +10,7 @@ import {
   UseGuards,
   Res,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -29,6 +30,8 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { UploadDocumentDto } from 'src/schemas/upload-document.dto';
 import { DocumentType } from 'src/enums/document-type.enum';
+import { DocumentStatus } from 'src/enums/document-status.enum';
+import { UpdateDocumentStatusDto } from 'src/schemas/update-doc-status.dto';
 
 @ApiTags('documents')
 @Controller('documents')
@@ -93,7 +96,15 @@ export class DocumentsController {
       days ? parseInt(days, 10) : 30,
     );
   }
-
+  @Patch(':id/status') // New endpoint for status update
+  @ApiOperation({ summary: 'Mettre à jour le statut du document' })
+  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR) // Restrict access to admins and supervisors
+  updateDocumentStatus(
+    @Param('id') id: string,
+    @Body() updateDocumentStatusDto: UpdateDocumentStatusDto,
+  ) {
+    return this.documentsService.updateDocumentStatus(id, updateDocumentStatusDto.status);
+  }
   @Get(':id/download')
   @ApiOperation({ summary: 'Télécharger un document' })
   async downloadDocument(@Param('id') id: string, @Res() res: Response) {

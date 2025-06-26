@@ -9,7 +9,7 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery, ApiBody, ApiResponse } from '@nestjs/swagger';
 
 import { VehiclesService } from './vehciles.service';
 import { CreateVehicleDto } from 'src/schemas/create-vehicle.dto';
@@ -18,6 +18,7 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { Roles } from 'src/decorators/roles.decorator';
 import { CurrentCompany } from 'src/decorators/company.decorator';
+import { UpdateVehicleDto } from 'src/schemas/update-vehicle.dto';
 
 @ApiTags('vehicles')
 @Controller('vehicles')
@@ -88,16 +89,20 @@ findAll(
     return this.vehiclesService.unassignDriver(id, companyId);
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: 'Mettre à jour un véhicule' })
-  @Roles(UserRole.ADMIN)
-  updateVehicle(
-    @Param('id') id: string,
-    @Body() updateData: Partial<CreateVehicleDto>,
-    @CurrentCompany() companyId: string,
-  ) {
-    return this.vehiclesService.updateVehicle(id, companyId, updateData);
-  }
+@Patch(':id')
+@ApiOperation({ summary: 'Mettre à jour un véhicule' })
+@ApiBody({ type: UpdateVehicleDto })
+@ApiResponse({ status: 200, description: 'Véhicule mis à jour avec succès' })
+@ApiResponse({ status: 404, description: 'Véhicule non trouvé' })
+@Roles(UserRole.ADMIN)
+updateVehicle(
+  @Param('id') id: string,
+  @Body() updateData: UpdateVehicleDto,
+  @CurrentCompany() companyId: string,
+) {
+  return this.vehiclesService.updateVehicle(id, companyId, updateData);
+}
+
   // @Get('search')
   // @ApiOperation({
   //   summary: 'Rechercher des véhicules par immatriculation, marque ou modèle',

@@ -8,6 +8,7 @@ import { Model } from 'mongoose';
 import { DocumentEntity } from '../schemas/document.schema';
 import { DocumentType } from 'src/enums/document-type.enum';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { DocumentStatus } from 'src/enums/document-status.enum';
 
 @Injectable()
 export class DocumentsService {
@@ -56,11 +57,28 @@ export class DocumentsService {
       vehicle: vehicleId,
       activity: activityId,
       expirationDate,
+      status : DocumentStatus.PENDING, // Default to PENDING if not provided
     });
 
     return document.save();
   }
+  async updateDocumentStatus(
+    id: string,
+    status: DocumentStatus,
+  ): Promise<DocumentEntity> {
+    const document = await this.documentModel
+      .findByIdAndUpdate(
+        id,
+        { status },
+        { new: true }, // Return the updated document
+      )
+      .exec();
 
+    if (!document) {
+      throw new NotFoundException('Document non trouvé');
+    }
+    return document;
+  }
   async deleteDocument(id: string): Promise<void> {
     const document = await this.documentModel.findById(id).exec();
     if (!document) {
