@@ -11,7 +11,12 @@ export class ChargmentDechargement {
   company: Types.ObjectId;
   @Prop({ type: Date })
   chargement: Date;
-
+  @Prop({ type: Date })
+  portDirection: Date;
+  @Prop({ type: Date })
+  baseDirection: Date;
+  @Prop({ type: Date })
+  arriveeBase: Date;
   @Prop({ type: Date })
   dechargement: Date;
 

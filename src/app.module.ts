@@ -14,6 +14,7 @@ import { CompaniesModule } from './companies/companies.module';
 import { CompanySettingsModule } from './company-settings/company-settings.module';
 import { PointageModule } from './pointage/pointage.module';
 import { ChargementDechargementModule } from './chargement-dechargement/chargement-dechargement.module';
+import { VehicleConditionsModule } from './vehicle-conditions/vehicle-conditions.module';
 
 @Module({
   imports: [
@@ -45,6 +46,8 @@ import { ChargementDechargementModule } from './chargement-dechargement/chargeme
     PointageModule,
 
     ChargementDechargementModule,
+
+    VehicleConditionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

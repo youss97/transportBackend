@@ -42,6 +42,14 @@ export class ChargementDechargementService {
       .sort({ createdAt: -1 })
       .exec();
   }
+  async findAll(): Promise<ChargmentDechargement[]> {
+    return this.chargementDechargementModel
+      .find()
+      .sort({ createdAt: -1 }) // Tri par date de création
+      .populate('driver') // Peupler la clé étrangère 'driver' avec les informations associées
+      .populate('company') // Peupler la clé étrangère 'company' avec les informations associées
+      .exec();
+  }
   async findAllByCompanyId(
     companyId: string,
   ): Promise<ChargmentDechargement[]> {
@@ -85,33 +93,33 @@ export class ChargementDechargementService {
     return updatedChargementDechargement;
   }
 
-async uploadPhoto(
-  file: Express.Multer.File,
-  folder: string,
-): Promise<string> {
-  try {
-    return await new Promise<string>((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: `chargement-dechargement/${folder}`,
-          resource_type: 'auto',
-        },
-        (error, result: UploadApiResponse) => {
-          if (error || !result) {
-            return reject(new BadRequestException('Failed to upload photo'));
-          }
-          resolve(result.secure_url);
-        },
-      );
+  async uploadPhoto(
+    file: Express.Multer.File,
+    folder: string,
+  ): Promise<string> {
+    try {
+      return await new Promise<string>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: `chargement-dechargement/${folder}`,
+            resource_type: 'auto',
+          },
+          (error, result: UploadApiResponse) => {
+            if (error || !result) {
+              return reject(new BadRequestException('Failed to upload photo'));
+            }
+            resolve(result.secure_url);
+          },
+        );
 
-      const bufferStream = new PassThrough();
-      bufferStream.end(file.buffer);
-      bufferStream.pipe(uploadStream);
-    });
-  } catch (error) {
-    throw new BadRequestException('Failed to upload photo');
+        const bufferStream = new PassThrough();
+        bufferStream.end(file.buffer);
+        bufferStream.pipe(uploadStream);
+      });
+    } catch (error) {
+      throw new BadRequestException('Failed to upload photo');
+    }
   }
-}
   async remove(id: string): Promise<void> {
     const result = await this.chargementDechargementModel
       .deleteOne({ _id: new Types.ObjectId(id) })

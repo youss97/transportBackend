@@ -92,6 +92,11 @@ export class PointageController {
     const driver = user.userId;
     return this.pointageService.findAllByUserId(driver);
   }
+  @Get()
+  @ApiOperation({ summary: 'tous les  pointages de toutes les societes' })
+  async findAll() {
+    return this.pointageService.findAll();
+  }
   @Get('by-company')
   @ApiOperation({ summary: "les pointages des utilisateurs d'une societe" })
   async findAllByCompanyId(@CurrentCompany() companyId: any) {

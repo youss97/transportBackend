@@ -17,7 +17,21 @@ export class CreateChargementDechargementDto {
   @IsDateString()
   @emptyToUndefined()
   dechargement?: string;
-
+  @ApiProperty({ type: Date, required: false })
+  @IsOptional()
+  @IsDateString()
+  @emptyToUndefined()
+  arriveeBase?: string;
+  @ApiProperty({ type: Date, required: false })
+  @IsOptional()
+  @IsDateString()
+  @emptyToUndefined()
+  baseDirection?: string;
+  @ApiProperty({ type: Date, required: false })
+  @IsOptional()
+  @IsDateString()
+  @emptyToUndefined()
+  portDirection?: string;
   @ApiProperty({ type: 'string', format: 'binary', required: false })
   @IsOptional()
   @IsString()
