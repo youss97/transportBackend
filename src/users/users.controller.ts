@@ -72,7 +72,7 @@ export class UsersController {
 
 @Get()
 @ApiOperation({ summary: 'Lister les utilisateurs avec pagination et recherche' })
-@Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+@Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
 @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
 @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
 @ApiQuery({ name: 'search', required: false, type: String, description: 'Filtrer par frstName,lastName,role,email' })
@@ -88,21 +88,21 @@ findAll(
 
   @Get('drivers')
   @ApiOperation({ summary: 'Lister tous les chauffeurs' })
-  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   findDrivers(@CurrentCompany() companyId: string) {
     return this.usersService.findDriversByCompany(companyId);
   }
 
   @Get('role/:role')
   @ApiOperation({ summary: 'Lister les utilisateurs par rôle' })
-  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   findByRole(@Param('role') role: string, @CurrentCompany() companyId: string) {
     return this.usersService.findUsersByRole(companyId, role);
   }
 
   @Get('stats')
   @ApiOperation({ summary: 'Statistiques des utilisateurs' })
-  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   async getStats(@CurrentCompany() companyId: string) {
     const totalUsers = await this.usersService.countUsersByCompany(companyId);
     const drivers = await this.usersService.findDriversByCompany(companyId);
@@ -123,7 +123,7 @@ findAll(
 
   @Put(':id/performance')
   @ApiOperation({ summary: 'Mettre à jour le score de performance' })
-  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   updatePerformance(
     @Param('id') id: string,
     @Body('score') score: number,
