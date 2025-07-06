@@ -41,7 +41,7 @@ export class PointageService {
       })
       .sort({ createdAt: -1 })
       .populate('driver') // Peupler la clé étrangère 'driver' avec les informations associées
-      .populate('company') // Peupler la clé étrangère 'company' avec les informations associées
+      .populate('company')
       .exec();
   }
 
