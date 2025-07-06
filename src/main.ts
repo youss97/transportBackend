@@ -5,13 +5,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
-  app.useGlobalPipes(new ValidationPipe({
-    
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   app.enableCors({
     origin: true,
@@ -24,12 +25,14 @@ async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth()
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
   await app.listen(3000);
-  console.log('🚀 Application démarrée sur http://localhost:3000');
+  console.log(
+    '🚀 Application démarrée sur http://localhost:3000 - Auto-deployment works!',
+  );
   console.log('📚 Documentation API: http://localhost:3000/api');
 }
 bootstrap();
