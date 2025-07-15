@@ -15,6 +15,8 @@ import { CompanySettingsModule } from './company-settings/company-settings.modul
 import { PointageModule } from './pointage/pointage.module';
 import { ChargementDechargementModule } from './chargement-dechargement/chargement-dechargement.module';
 import { VehicleConditionsModule } from './vehicle-conditions/vehicle-conditions.module';
+import { SitesModule } from './sites/sites.module';
+import { AssignmentModule } from './assignment/assignment.module';
 
 @Module({
   imports: [
@@ -48,6 +50,10 @@ import { VehicleConditionsModule } from './vehicle-conditions/vehicle-conditions
     ChargementDechargementModule,
 
     VehicleConditionsModule,
+
+    SitesModule,
+
+    AssignmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

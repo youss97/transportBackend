@@ -11,7 +11,6 @@ export class CreateChargementDechargementDto {
   @IsDateString()
   @emptyToUndefined()
   chargement?: string;
-
   @ApiProperty({ type: Date, required: false })
   @IsOptional()
   @IsDateString()
