@@ -32,6 +32,7 @@ export class AssignmentController {
     @Body() createAssignmentDto: CreateAssignmentDto,
     @CurrentCompany() companyId: any,
   ) {
+    console.log('Creating assignment with data:', createAssignmentDto);
     return this.assignmentService.create(createAssignmentDto, companyId);
   }
 
@@ -49,7 +50,17 @@ export class AssignmentController {
   getMyDrivers(@CurrentUser() user: any) {
     return this.assignmentService.findDriversBySupervisor(user._id);
   }
+  @Get('unassigned-drivers')
+  @ApiOperation({ summary: 'Lister les chauffeurs non affectés' })
+  getUnassignedDrivers() {
+    return this.assignmentService.getUnassignedDrivers();
+  }
 
+  @Get('unassigned-supervisors')
+  @ApiOperation({ summary: 'Lister les superviseurs non affectés' })
+  getUnassignedSupervisors() {
+    return this.assignmentService.getUnassignedSupervisors();
+  }
   @Get(':id')
   @ApiOperation({ summary: 'Afficher une affectation par ID' })
   @ApiParam({ name: 'id', description: 'ID de l’affectation' })
@@ -74,15 +85,5 @@ export class AssignmentController {
     return this.assignmentService.remove(id);
   }
 
-  @Get('unassigned-drivers')
-  @ApiOperation({ summary: 'Lister les chauffeurs non affectés' })
-  getUnassignedDrivers() {
-    return this.assignmentService.getUnassignedDrivers();
-  }
 
-  @Get('unassigned-supervisors')
-  @ApiOperation({ summary: 'Lister les superviseurs non affectés' })
-  getUnassignedSupervisors() {
-    return this.assignmentService.getUnassignedSupervisors();
-  }
 }

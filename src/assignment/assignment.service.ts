@@ -21,7 +21,9 @@ export class AssignmentService {
     @InjectModel(Site.name) private readonly siteModel: Model<SiteDocument>,
   ) {}
 
-  async create(dto: CreateAssignmentDto, companyId: Types.ObjectId) {
+  async create(dto: CreateAssignmentDto, companyId: string) {
+    console.log('Creating assignment with data:', dto);
+    console.log('Company ID:', companyId);
     const driver = await this.userModel.findById(dto.driver);
     if (!driver || driver.role !== UserRole.DRIVER) {
       throw new BadRequestException(
@@ -54,7 +56,8 @@ export class AssignmentService {
       .find({ company: companyId })
       .populate('driver', 'firstName lastName email role')
       .populate('supervisor', 'firstName lastName email role')
-      .populate('site', 'nom_site adresse_depart adresse_arrivee');
+      .populate('site', 'nom_site adresse_depart adresse_arrivee')
+      .populate('company');
   }
 
   async findOne(id: string) {
@@ -62,7 +65,8 @@ export class AssignmentService {
       .findById(id)
       .populate('driver', 'firstName lastName email role')
       .populate('supervisor', 'firstName lastName email role')
-      .populate('site', 'nom_site adresse_depart adresse_arrivee');
+      .populate('site', 'nom_site adresse_depart adresse_arrivee')
+      .populate('company')
 
     if (!assignment) {
       throw new NotFoundException('Affectation non trouvée');
