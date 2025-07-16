@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { SitesService } from './sites.service';
 import { UpdateSiteDto } from 'src/schemas/update-sites.dto';
@@ -20,10 +21,13 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { Site } from 'src/schemas/sites.schema';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/guards/roles.guard';
 
 @ApiTags('Sites')
-@ApiBearerAuth()
 @Controller('sites')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 export class SitesController {
   constructor(private readonly sitesService: SitesService) {}
 
@@ -39,6 +43,7 @@ export class SitesController {
     @Body() createSiteDto: CreateSiteDto,
     @CurrentCompany() companyId: string,
   ) {
+    console.log('Companyy:', companyId);
     return this.sitesService.create({ ...createSiteDto, companyId });
   }
 
@@ -84,7 +89,7 @@ export class SitesController {
   @ApiOperation({ summary: 'Supprimer un site' })
   @ApiParam({ name: 'id', description: 'ID du site' })
   @ApiResponse({ status: 200, description: 'Site supprimé' })
-  remove(@Param('id') id: string, @CurrentCompany() companyId: string) {
-    return this.sitesService.remove(id, companyId);
+  remove(@Param('id') id: string) {
+    return this.sitesService.remove(id);
   }
 }

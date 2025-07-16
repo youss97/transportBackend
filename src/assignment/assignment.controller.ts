@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AssignmentService } from './assignment.service';
-import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateAssignmentDto } from 'src/schemas/create-assignment.dto';
 import { UpdateAssignmentDto } from 'src/schemas/update-assignment.dto';
 import { CurrentCompany } from 'src/decorators/company.decorator';
@@ -20,8 +20,9 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 
 @ApiTags('Affectations')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('assignments')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 export class AssignmentController {
   constructor(private readonly assignmentService: AssignmentService) {}
 
