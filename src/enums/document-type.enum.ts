@@ -15,4 +15,6 @@ export enum DocumentType {
   MEDICAL_STOP = 'medical_stop',
   MEDICAL_VISIT = 'medical_visit',
   SELFIE = 'selfie',
+  PERMIS_RECTO = 'permis_recto',
+  PERMIS_VERSO = 'permis_verso'
 }

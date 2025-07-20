@@ -17,6 +17,8 @@ import { ChargementDechargementModule } from './chargement-dechargement/chargeme
 import { VehicleConditionsModule } from './vehicle-conditions/vehicle-conditions.module';
 import { SitesModule } from './sites/sites.module';
 import { AssignmentModule } from './assignment/assignment.module';
+import { LeaveModule } from './leave/leave.module';
+import { GazoilModule } from './gazoil/gazoil.module';
 
 @Module({
   imports: [
@@ -54,6 +56,9 @@ import { AssignmentModule } from './assignment/assignment.module';
     SitesModule,
 
     AssignmentModule,
+
+    LeaveModule,
+    GazoilModule,
   ],
   controllers: [AppController],
   providers: [AppService],

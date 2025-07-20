@@ -38,27 +38,32 @@ export class ChargementDechargementController {
     private readonly chargementDechargementService: ChargementDechargementService,
   ) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Ajouter un chargement/dechargement' })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'photo', maxCount: 1 }]))
-  async create(
-    @Body() createDto: CreateChargementDechargementDto,
-    @CurrentUser() user: any,
-    @CurrentCompany() companyId: string,
-    @UploadedFiles() files: { photo?: Express.Multer.File[] },
-  ) {
-    const userId = user.userId;
-    if (files?.photo?.[0]) {
-      createDto.photo = await this.chargementDechargementService.uploadPhoto(
-        files.photo[0],
-        'photo',
-      );
-    }
+@Post()
+@ApiOperation({ summary: 'Ajouter un chargement/dechargement' })
+@ApiConsumes('multipart/form-data')
+@UseInterceptors(FileFieldsInterceptor([{ name: 'photo', maxCount: 1 }, { name: 'balancePhoto', maxCount: 1 }]))
+async create(
+  @Body() createDto: CreateChargementDechargementDto,
+  @CurrentUser() user: any,
+  @CurrentCompany() companyId: string,
+  @UploadedFiles() files: { photo?: Express.Multer.File[], balancePhoto?: Express.Multer.File[] },
+) {
+  const userId = user.userId;
 
-    return this.chargementDechargementService.create(createDto, userId,companyId);
+  // Téléchargement de la photo de chargement/déchargement si elle est fournie
+  if (files?.photo?.[0]) {
+    createDto.photo = await this.chargementDechargementService.uploadPhoto(files.photo[0], 'photo');
   }
-   @Get('today')
+
+  // Téléchargement de la photo de balance si elle est fournie
+  if (files?.balancePhoto?.[0]) {
+    createDto.balancePhoto = await this.chargementDechargementService.uploadPhoto(files.balancePhoto[0], 'balance');
+  }
+
+  return this.chargementDechargementService.create(createDto, userId, companyId);
+}
+
+@Get('today')
 @ApiOperation({
   summary: "Récupérer chDe d'aujourd'hui du conducteur",
 })

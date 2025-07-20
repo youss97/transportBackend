@@ -1,6 +1,9 @@
 import {
+  Body,
   Controller,
   Get,
+  Param,
+  Patch,
   Post,
   UploadedFiles,
   UseGuards,
@@ -11,7 +14,6 @@ import {
   ApiBody,
   ApiConsumes,
   ApiOperation,
-  ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -21,9 +23,10 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
-import { VehicleCondition } from 'src/schemas/vehicle-conditions.schema';
+import { ConditionStatus, VehicleCondition } from 'src/schemas/vehicle-conditions.schema';
+import { UpdateConditionStatusDto } from 'src/schemas/update-conditions-status.dto';
 
-ApiTags('vehicle-conditions');
+@ApiTags('vehicle-conditions')
 @Controller('vehicle-conditions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -49,8 +52,8 @@ export class VehicleConditionsController {
   async uploadCondition(@CurrentUser() user: any, @UploadedFiles() files: any) {
     return this.service.createConditionFromDriver(user, files);
   }
+
   @Get('latest')
-  @UseGuards(JwtAuthGuard) // Utilisation d'un guard pour authentifier l'utilisateur
   @ApiOperation({
     summary:
       'Get the latest vehicle condition for the current logged-in driver',
@@ -62,5 +65,30 @@ export class VehicleConditionsController {
   })
   async getLatestCondition(@CurrentUser() req: any) {
     return this.service.getLatestConditionForCurrentUser(req);
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({ summary: 'Change the status of the vehicle condition' })
+  @ApiResponse({
+    status: 200,
+    description: 'The vehicle condition status was updated.',
+  })
+  async changeStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateConditionStatusDto,
+  ) {
+    return this.service.changeStatus(id, dto.status);
+  }
+
+  @Patch(':id/validate')
+  @ApiOperation({ summary: 'Validate the vehicle condition' })
+  async validateCondition(@Param('id') id: string) {
+    return this.service.changeStatus(id, ConditionStatus.VALIDATED);
+  }
+
+  @Patch(':id/reject')
+  @ApiOperation({ summary: 'Reject the vehicle condition' })
+  async rejectCondition(@Param('id') id: string) {
+    return this.service.changeStatus(id, ConditionStatus.REJECTED);
   }
 }
