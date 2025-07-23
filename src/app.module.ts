@@ -19,6 +19,7 @@ import { SitesModule } from './sites/sites.module';
 import { AssignmentModule } from './assignment/assignment.module';
 import { LeaveModule } from './leave/leave.module';
 import { GazoilModule } from './gazoil/gazoil.module';
+import { PanneModule } from './panne/panne.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { GazoilModule } from './gazoil/gazoil.module';
 
     LeaveModule,
     GazoilModule,
+    PanneModule,
   ],
   controllers: [AppController],
   providers: [AppService],
