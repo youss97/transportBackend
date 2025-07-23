@@ -8,45 +8,63 @@ import {
   Body,
   Req,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import { GazoilService } from './gazoil.service';
-import { FileFieldsInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  FileFieldsInterceptor,
+  FilesInterceptor,
+} from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { UserRole } from 'src/enums/user-role.enum';
 import { Roles } from 'src/decorators/roles.decorator';
 import { CreateGazoilDto } from 'src/schemas/create-gazoil.dto';
 import { CurrentCompany } from 'src/decorators/company.decorator';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @ApiTags('Gazoil')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('gazoil')
 export class GazoilController {
   constructor(private readonly gazoilService: GazoilService) {}
 
   @Post()
-  @Roles(UserRole.DRIVER)
   @UseInterceptors(
     FileFieldsInterceptor([
+      { name: 'montantPhoto', maxCount: 1 },
       { name: 'kilometragePhoto', maxCount: 1 },
-      { name: 'gazoilPhoto', maxCount: 1 },
-    ])
+    ]),
   )
   @ApiOperation({ summary: 'Ajouter une entrée de gazoil' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: CreateGazoilDto })
   async create(
-    @UploadedFiles() files: { kilometragePhoto?: Express.Multer.File[], gazoilPhoto?: Express.Multer.File[] },
+    @UploadedFiles()
+    files: {
+      montantPhoto?: Express.Multer.File[];
+      kilometragePhoto?: Express.Multer.File[];
+    },
     @Body() dto: CreateGazoilDto,
     @CurrentUser() req: any,
-    @CurrentCompany() company: string
+    @CurrentCompany() company: string,
   ) {
     const driverId = req.userId;
+    console.log('copanyn,', company);
     const companyId = company;
-
+    console.log('companyId', companyId);
     // Vérifie que les fichiers sont présents
-    if (!files.kilometragePhoto || !files.gazoilPhoto) {
-      throw new Error('Les deux images (kilométrage et gazoil) sont nécessaires.');
+    if (!files.montantPhoto || !files.kilometragePhoto) {
+      throw new Error(
+        'Les deux images (kilométrage et gazoil) sont nécessaires.',
+      );
     }
 
     return this.gazoilService.create(dto, files, driverId, companyId);
