@@ -27,6 +27,7 @@ async create(
   });
 }
 
+
 async findByUser(userId: Types.ObjectId, companyId: Types.ObjectId) {
   return this.leaveModel.find({ user: userId, companyId }).sort({ createdAt: -1 });
 }
