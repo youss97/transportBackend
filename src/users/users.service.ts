@@ -271,4 +271,13 @@ export class UsersService {
 
     return this.userModel.find(query).select('-password').exec();
   }
+  async updateRefreshToken(userId: string, refreshToken: string) {
+    return this.userModel.findByIdAndUpdate(userId, { refreshToken });
+  }
+
+  async getUserIfRefreshTokenMatches(userId: string, refreshToken: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user || user.refreshToken !== refreshToken) return null;
+    return user;
+  }
 }

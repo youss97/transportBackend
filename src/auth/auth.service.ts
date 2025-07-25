@@ -19,26 +19,44 @@ export class AuthService {
     return null;
   }
 
-  async login(user: any) {
-    const payload = { 
-      email: user.email, 
-      sub: user._id, 
-      role: user.role,
+ async login(user: any) {
+  const payload = { 
+    email: user.email, 
+    sub: user._id, 
+    role: user.role,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    company: user.company
+  };
+
+  const accessToken = this.jwtService.sign(payload, {
+    expiresIn: '15m',
+  });
+
+  const refreshToken = this.jwtService.sign(
+    { sub: user._id },
+    { expiresIn: '7d', secret: process.env.REFRESH_TOKEN_SECRET }
+  );
+
+  // Enregistrer le refreshToken dans la base (hashé si besoin)
+  await this.usersService.updateRefreshToken(user._id, refreshToken);
+
+  return {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    user: {
+      id: user._id,
+      email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      company: user.company // Assurez-vous que l'utilisateur a une société
-    };
-    
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user._id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        company: user.company
-      },
-    };
-  }
+      role: user.role,
+      company: user.company
+    },
+  };
+}
+async getUserIfRefreshTokenMatches(userId: string, refreshToken: string) {
+  return this.usersService.getUserIfRefreshTokenMatches(userId, refreshToken);
+}
+
+
 }

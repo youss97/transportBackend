@@ -44,6 +44,9 @@ export class User extends Document {
   // Nouveau champ pour la photo de l'utilisateur
   @Prop({ default: null })
   photo: string;
+  
+  @Prop({ default: null })
+  refreshToken?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
