@@ -11,7 +11,6 @@ export class SitesService {
   constructor(@InjectModel(Site.name) private siteModel: Model<SiteDocument>) {}
 
   async create(createSiteDto: CreateSiteDto & { companyId: string }) {
-    console.log('Creating site with data:', createSiteDto);
     const newSite = new this.siteModel({
       ...createSiteDto,
       company: createSiteDto.companyId,

@@ -17,7 +17,6 @@ export class VehicleConditionsService {
 
   // Méthode pour créer une condition et initialiser son statut à 'pending'
   async createConditionFromDriver(currentUser: any, files: any) {
-    console.log('Creating condition from driver:', currentUser, files);
 
     const vehicle = await this.vehicleModel.findOne({ currentDriver: currentUser.userId });
     if (!vehicle) {

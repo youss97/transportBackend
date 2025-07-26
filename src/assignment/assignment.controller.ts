@@ -26,15 +26,14 @@ import { RolesGuard } from 'src/guards/roles.guard';
 export class AssignmentController {
   constructor(private readonly assignmentService: AssignmentService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Créer une nouvelle affectation' })
-  create(
-    @Body() createAssignmentDto: CreateAssignmentDto,
-    @CurrentCompany() companyId: any,
-  ) {
-    console.log('Creating assignment with data:', createAssignmentDto);
-    return this.assignmentService.create(createAssignmentDto, companyId);
-  }
+@Post()
+@ApiOperation({ summary: 'Créer une nouvelle affectation' })
+create(
+  @Body() createAssignmentDto: CreateAssignmentDto,
+  @CurrentCompany() companyId: any,
+) {
+  return this.assignmentService.create(createAssignmentDto, companyId);
+}
 
   @Get()
   @ApiOperation({ summary: 'Lister toutes les affectations de la société' })

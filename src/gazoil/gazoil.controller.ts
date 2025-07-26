@@ -57,9 +57,8 @@ export class GazoilController {
     @CurrentCompany() company: string,
   ) {
     const driverId = req.userId;
-    console.log('copanyn,', company);
     const companyId = company;
-    console.log('companyId', companyId);
+
     // Vérifie que les fichiers sont présents
     if (!files.montantPhoto || !files.kilometragePhoto) {
       throw new Error(

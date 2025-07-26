@@ -15,8 +15,8 @@ export class Assignment {
   supervisor?: Types.ObjectId;
 
   @ApiProperty({ description: 'ID du site', type: String })
-  @Prop({ type: Types.ObjectId, ref: 'Site', required: true })
-  site: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Site', required: false })
+  site ?: Types.ObjectId;
 
   @ApiProperty({ description: 'ID de la société', type: String })
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })

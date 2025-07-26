@@ -43,7 +43,6 @@ export class SitesController {
     @Body() createSiteDto: CreateSiteDto,
     @CurrentCompany() companyId: string,
   ) {
-    console.log('Companyy:', companyId);
     return this.sitesService.create({ ...createSiteDto, companyId });
   }
 
