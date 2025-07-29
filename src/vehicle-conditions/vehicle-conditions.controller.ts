@@ -23,7 +23,10 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
-import { ConditionStatus, VehicleCondition } from 'src/schemas/vehicle-conditions.schema';
+import {
+  ConditionStatus,
+  VehicleCondition,
+} from 'src/schemas/vehicle-conditions.schema';
 import { UpdateConditionStatusDto } from 'src/schemas/update-conditions-status.dto';
 
 @ApiTags('vehicle-conditions')
@@ -90,5 +93,25 @@ export class VehicleConditionsController {
   @ApiOperation({ summary: 'Reject the vehicle condition' })
   async rejectCondition(@Param('id') id: string) {
     return this.service.changeStatus(id, ConditionStatus.REJECTED);
+  }
+
+  @Get('vehicle/:vehicleId')
+  @ApiOperation({ summary: 'Get all conditions by vehicle ID' })
+  @ApiResponse({ status: 200, description: 'List of vehicle conditions' })
+  async getByVehicleId(@Param('vehicleId') vehicleId: string) {
+    return this.service.getConditionsByVehicleId(vehicleId);
+  }
+
+  @Get('all/:vehicleId')
+  @ApiOperation({
+    summary: 'Get all conditions by vehicle ID with driver info',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'All conditions for the vehicle',
+    type: [VehicleCondition],
+  })
+  async findAllByVehicleId(@Param('vehicleId') vehicleId: string) {
+    return this.service.findAllByVehicleId(vehicleId);
   }
 }

@@ -41,6 +41,54 @@ export class Vehicle extends Document {
 
   @Prop({ default: true })
   isActive: boolean;
+  @Prop({ required: false })
+  carteGriseNumber?: string;
+
+  @Prop({ type: Date })
+  carteGriseRegistrationDate?: Date;
+
+  @Prop()
+  carteGriseBrand?: string;
+
+  @Prop()
+  carteGriseModel?: string;
+
+  @Prop()
+  carteGriseFuelType?: string;
+
+  @Prop()
+  kilometersAtPurchase?: number;
+
+  @Prop()
+  vehicleCategory?: string;
+
+  @Prop()
+  insuranceName?: string;
+
+  @Prop()
+  insuranceType?: string;
+
+  @Prop({ type: Date })
+  insuranceStartDate?: Date;
+
+  @Prop({ type: Date })
+  insuranceEndDate?: Date;
+
+  @Prop()
+  lastOilChangeDate?: Date;
+
+  @Prop({ type: Date })
+  technicalControlExpirationDate?: Date;
+
+  // Champs fichiers
+  @Prop()
+  carteGriseFile?: string;
+
+  @Prop()
+  insuranceFileUrl?: string;
+
+  @Prop()
+  technicalControlFileUrl?: string;
 }
 
 export const VehicleSchema = SchemaFactory.createForClass(Vehicle);

@@ -144,4 +144,27 @@ export class DocumentsService {
       })
       .exec();
   }
+
+  async getIdentityFolderByUserId(userId: string): Promise<Partial<Record<DocumentType, DocumentEntity>>> {
+  const typesToFetch = [
+    DocumentType.PERMIS_RECTO,
+    DocumentType.PERMIS_VERSO,
+    DocumentType.ID_DOCUMENT_RECTO,
+    DocumentType.ID_DOCUMENT_VERSO,
+  ];
+
+  const documents = await this.documentModel.find({
+    owner: userId,
+    type: { $in: typesToFetch },
+  }).exec();
+
+  // Retourner un objet indexé par type
+  const result: Partial<Record<DocumentType, DocumentEntity>> = {};
+  for (const doc of documents) {
+    result[doc.type] = doc;
+  }
+
+  return result;
+}
+
 }

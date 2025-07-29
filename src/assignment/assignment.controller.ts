@@ -42,7 +42,6 @@ create(
   }
 
   @Get('my-drivers')
-  @Roles(UserRole.SUPERVISOR)
   @ApiOperation({
     summary: 'Lister les chauffeurs affectés au superviseur connecté',
   })

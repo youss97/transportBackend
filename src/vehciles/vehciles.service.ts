@@ -5,38 +5,56 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Vehicle } from 'src/schemas/vehicle.schema';
 import { VehicleStatus } from 'src/enums/vehicle-status.enum';
 import { CreateVehicleDto } from 'src/schemas/create-vehicle.dto';
 import { UpdateVehicleDto } from 'src/schemas/update-vehicle.dto';
-import { Vehicle } from 'src/schemas/vehicle.schema';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service'; // Import du service Cloudinary
 
 @Injectable()
 export class VehiclesService {
   constructor(
     @InjectModel(Vehicle.name) private vehicleModel: Model<Vehicle>,
+    private readonly cloudinaryService: CloudinaryService, // Injection du service Cloudinary
   ) {}
 
-  async create(
-    createVehicleDto: CreateVehicleDto,
-    companyId: string,
-  ): Promise<Vehicle> {
-    const existingVehicle = await this.vehicleModel.findOne({
-      licensePlate: createVehicleDto.licensePlate,
-      company: companyId,
-    });
+async create(
+  dto: CreateVehicleDto,
+  files: {
+    carteGriseFile?: Express.Multer.File[];
+    insuranceFile?: Express.Multer.File[];
+    technicalControlFile?: Express.Multer.File[];
+  },
+) {
+  const fileUrls = {
+    carteGriseFile: null,
+    insuranceFile: null,
+    technicalControlFile: null,
+  };
 
-    if (existingVehicle) {
-      throw new ConflictException(
-        'Un véhicule avec cette immatriculation existe déjà',
-      );
-    }
-
-    const vehicle = new this.vehicleModel({
-      ...createVehicleDto,
-      company: companyId,
-    });
-    return vehicle.save();
+  if (files.carteGriseFile?.[0]) {
+    const result = await this.cloudinaryService.uploadFile(files.carteGriseFile[0]);
+    fileUrls.carteGriseFile = result.secure_url;
   }
+  if (files.insuranceFile?.[0]) {
+    const result = await this.cloudinaryService.uploadFile(files.insuranceFile[0]);
+    fileUrls.insuranceFile = result.secure_url;
+  }
+  if (files.technicalControlFile?.[0]) {
+    const result = await this.cloudinaryService.uploadFile(files.technicalControlFile[0]);
+    fileUrls.technicalControlFile = result.secure_url;
+  }
+
+  const newVehicle = new this.vehicleModel({
+    ...dto,
+    carteGriseFile: fileUrls.carteGriseFile,
+    insuranceFile: fileUrls.insuranceFile,
+    technicalControlFile: fileUrls.technicalControlFile,
+  });
+
+  return newVehicle.save();
+}
+
 
   async findAll(
     companyId: string,
@@ -83,10 +101,6 @@ export class VehiclesService {
     };
   }
 
-  async findOneByDriver(driverId: string): Promise<Vehicle> {
-    return this.vehicleModel.findOne({ currentDriver: driverId }).exec();
-  }
-
   async findOne(id: string): Promise<Vehicle> {
     const vehicle = await this.vehicleModel
       .findById(id)
@@ -123,37 +137,6 @@ export class VehiclesService {
     return vehicle;
   }
 
-  async updateKilometers(
-    vehicleId: string,
-    kilometers: number,
-  ): Promise<Vehicle> {
-    const vehicle = await this.vehicleModel
-      .findByIdAndUpdate(
-        vehicleId,
-        {
-          totalKilometers: kilometers,
-          maintenanceKilometers: kilometers,
-        },
-        { new: true },
-      )
-      .exec();
-
-    if (!vehicle) {
-      throw new NotFoundException('Véhicule non trouvé');
-    }
-    return vehicle;
-  }
-
-  async getVehiclesNeedingMaintenance(companyId: string): Promise<Vehicle[]> {
-    return this.vehicleModel
-      .find({
-        company: companyId,
-        $expr: {
-          $gte: ['$maintenanceKilometers', '$nextMaintenanceKm'],
-        },
-      })
-      .exec();
-  }
   async unassignDriver(vehicleId: string, companyId: string): Promise<Vehicle> {
     const vehicle = await this.vehicleModel.findOneAndUpdate(
       { _id: vehicleId, company: companyId },
@@ -171,12 +154,13 @@ export class VehiclesService {
     return vehicle;
   }
 
- async updateVehicle(
+  async updateVehicle(
     id: string,
     companyId: string,
     updateData: UpdateVehicleDto,
+    carteGriseFile?: Express.Multer.File, // Fichier carte grise (optionnel)
   ): Promise<Vehicle> {
-    // 1. Récupérer le véhicule existant
+    // Récupérer le véhicule existant
     const existingVehicle = await this.vehicleModel.findOne({
       _id: id,
       company: companyId,
@@ -186,36 +170,24 @@ export class VehiclesService {
       throw new NotFoundException('Véhicule non trouvé ou accès refusé');
     }
 
-    // 2. Filtrer les champs undefined/null du updateData
-    const filteredUpdateData = Object.entries(updateData).reduce((acc, [key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as any);
+    // Gérer le fichier carte grise (si présent)
+    if (carteGriseFile) {
+      const carteGriseUploadResponse = await this.cloudinaryService.uploadFile(carteGriseFile);
+      updateData.carteGriseFile= carteGriseUploadResponse.secure_url;
+    }
 
-    // 3. Fusionner avec les données existantes
-    const mergedData = {
-      ...existingVehicle.toObject(),
-      ...filteredUpdateData,
-      updatedAt: new Date(), // Optionnel: mettre à jour la date de modification
-    };
-
-    // 4. Effectuer la mise à jour
+    // Mettre à jour les autres champs
     const updatedVehicle = await this.vehicleModel.findOneAndUpdate(
       { _id: id, company: companyId },
-      mergedData,
+      { ...updateData, updatedAt: new Date() },
       { new: true, runValidators: true },
     );
 
     return updatedVehicle;
   }
 
-
-  async deleteVehicle(
-    id: string,
-    companyId: string,
-  ): Promise<{ deleted: boolean }> {
+  // Supprimer un véhicule
+  async deleteVehicle(id: string, companyId: string): Promise<{ deleted: boolean }> {
     const res = await this.vehicleModel.deleteOne({
       _id: id,
       company: companyId,
@@ -227,30 +199,28 @@ export class VehiclesService {
 
     return { deleted: true };
   }
-  async searchVehicles(
-    companyId: string,
-    filters: { licensePlate?: string; brand?: string; modelCar?: string },
-  ): Promise<Vehicle[]> {
-    const query: any = {
-      company: companyId,
-      isActive: true,
-    };
 
-    if (filters.licensePlate) {
-      query.licensePlate = { $regex: filters.licensePlate, $options: 'i' };
-    }
-
-    if (filters.brand) {
-      query.brand = { $regex: filters.brand, $options: 'i' };
-    }
-
-    if (filters.modelCar) {
-      query.modelCar = { $regex: filters.modelCar, $options: 'i' };
-    }
-
+  async getVehiclesNeedingMaintenance(companyId: string): Promise<Vehicle[]> {
     return this.vehicleModel
-      .find(query)
-      .populate('currentDriver', 'firstName lastName')
+      .find({
+        company: companyId,
+        $expr: {
+          $gte: ['$maintenanceKilometers', '$nextMaintenanceKm'],
+        },
+      })
       .exec();
   }
+   async findOneByDriver(driverId: string): Promise<Vehicle> {
+    const vehicle = await this.vehicleModel
+      .findOne({ currentDriver: driverId })
+      .populate('currentDriver', 'firstName lastName') // Optionnel : peupler le champ 'currentDriver'
+      .exec();
+
+    if (!vehicle) {
+      throw new NotFoundException('Aucun véhicule trouvé pour ce chauffeur');
+    }
+
+    return vehicle;
+  }
+
 }

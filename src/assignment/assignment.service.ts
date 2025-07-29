@@ -5,12 +5,12 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, Types } from 'mongoose';
-import { UserRole } from 'src/enums/user-role.enum';
 import { Assignment, AssignmentDocument } from 'src/schemas/assignment.schema';
 import { CreateAssignmentDto } from 'src/schemas/create-assignment.dto';
-import { Site, SiteDocument } from 'src/schemas/sites.schema';
 import { UpdateAssignmentDto } from 'src/schemas/update-assignment.dto';
 import { User } from 'src/schemas/user.schema';
+import { Site, SiteDocument } from 'src/schemas/sites.schema';
+import { UserRole } from 'src/enums/user-role.enum';
 
 @Injectable()
 export class AssignmentService {
@@ -21,71 +21,71 @@ export class AssignmentService {
     @InjectModel(Site.name) private readonly siteModel: Model<SiteDocument>,
   ) {}
 
- async create(dto: CreateAssignmentDto, companyId: string) {
-
-
-  // ✅ Vérification chauffeur (si défini et non vide)
-  if (dto.driver && dto.driver.trim() !== '') {
-    if (!isValidObjectId(dto.driver)) {
-      throw new BadRequestException('Identifiant du chauffeur invalide');
+  async create(dto: CreateAssignmentDto, companyId: string) {
+    // ✅ Vérification des chauffeurs
+    const validDrivers: Types.ObjectId[] = [];
+    if (dto.drivers && dto.drivers.length > 0) {
+      for (const driverId of dto.drivers) {
+        if (!isValidObjectId(driverId)) {
+          throw new BadRequestException(`ID chauffeur invalide : ${driverId}`);
+        }
+        const driver = await this.userModel.findById(driverId) as User;
+        if (!driver || driver.role !== UserRole.DRIVER) {
+          throw new BadRequestException(`Chauffeur non valide : ${driverId}`);
+        }
+        validDrivers.push(driver._id as Types.ObjectId);
+      }
     }
-    const driver = await this.userModel.findById(dto.driver);
-    if (!driver || driver.role !== UserRole.DRIVER) {
-      throw new BadRequestException('Le chauffeur est invalide ou non autorisé');
-    }
-  } else {
-    dto.driver = undefined;
-  }
 
-  // ✅ Vérification superviseur (si défini et non vide)
-  if (dto.supervisor && dto.supervisor.trim() !== '') {
-    if (!isValidObjectId(dto.supervisor)) {
-      throw new BadRequestException('Identifiant du superviseur invalide');
+    // ✅ Vérification des superviseurs
+    const validSupervisors: Types.ObjectId[] = [];
+    if (dto.supervisors && dto.supervisors.length > 0) {
+      for (const supId of dto.supervisors) {
+        if (!isValidObjectId(supId)) {
+          throw new BadRequestException(`ID superviseur invalide : ${supId}`);
+        }
+        const supervisor = await this.userModel.findById(supId);
+        if (!supervisor || supervisor.role !== UserRole.SUPERVISOR) {
+          throw new BadRequestException(
+            `Superviseur non valide : ${supId}`,
+          );
+        }
+        validSupervisors.push(supervisor._id as Types.ObjectId);
+      }
     }
-    const supervisor = await this.userModel.findById(dto.supervisor);
-    if (!supervisor || supervisor.role !== UserRole.SUPERVISOR) {
-      throw new BadRequestException('Le superviseur est invalide ou non autorisé');
-    }
-  } else {
-    dto.supervisor = undefined;
-  }
 
-  // ✅ Vérification site (si défini et non vide)
-  if (dto.site && dto.site.trim() !== '') {
+    // ✅ Vérification du site
     if (!isValidObjectId(dto.site)) {
-      throw new BadRequestException('Identifiant du site invalide');
+      throw new BadRequestException('ID de site invalide');
     }
+
     const site = await this.siteModel.findById(dto.site);
     if (!site) {
-      throw new BadRequestException('Le site spécifié est introuvable');
+      throw new BadRequestException('Site introuvable');
     }
-  } else {
-    dto.site = undefined;
-  }
 
-  // ✅ Création de l'affectation
-  return this.assignmentModel.create({
-    ...dto,
-    company: companyId,
-  });
-}
+    return this.assignmentModel.create({
+      drivers: validDrivers,
+      supervisors: validSupervisors,
+      site: site._id,
+      company: companyId,
+    });
+  }
 
   async findAll(companyId: Types.ObjectId) {
     return this.assignmentModel
       .find({ company: companyId })
-      .populate('driver', 'firstName lastName email role')
-      .populate('supervisor', 'firstName lastName email role')
-      .populate('site', 'nom_site adresse_depart adresse_arrivee')
-      .populate('company');
+      .populate('drivers', 'firstName lastName email role')
+      .populate('supervisors', 'firstName lastName email role')
+      .populate('site', 'nom_site adresse_depart adresse_arrivee');
   }
 
   async findOne(id: string) {
     const assignment = await this.assignmentModel
       .findById(id)
-      .populate('driver', 'firstName lastName email role')
-      .populate('supervisor', 'firstName lastName email role')
-      .populate('site', 'nom_site adresse_depart adresse_arrivee')
-      .populate('company');
+      .populate('drivers', 'firstName lastName email role')
+      .populate('supervisors', 'firstName lastName email role')
+      .populate('site', 'nom_site adresse_depart adresse_arrivee');
 
     if (!assignment) {
       throw new NotFoundException('Affectation non trouvée');
@@ -96,70 +96,78 @@ export class AssignmentService {
 
   async findDriversBySupervisor(supervisorId: Types.ObjectId) {
     const assignments = await this.assignmentModel
-      .find({ supervisor: supervisorId })
-      .populate('driver', 'firstName lastName email');
+      .find({ supervisors: supervisorId })
+      .populate('drivers', 'firstName lastName email');
 
-    // Extraire les chauffeurs uniques
     const uniqueDriversMap = new Map();
-
     for (const assign of assignments) {
-      const driver = assign.driver as any;
-      if (!uniqueDriversMap.has(driver._id.toString())) {
-        uniqueDriversMap.set(driver._id.toString(), driver);
-      }
+      const drivers = assign.drivers as any[];
+      drivers.forEach(driver => {
+        if (!uniqueDriversMap.has(driver._id.toString())) {
+          uniqueDriversMap.set(driver._id.toString(), driver);
+        }
+      });
     }
 
     return Array.from(uniqueDriversMap.values());
   }
 
-async update(id: string, dto: UpdateAssignmentDto) {
-  const assignment = await this.assignmentModel.findById(id);
-  if (!assignment) {
-    throw new NotFoundException('Affectation non trouvée');
-  }
+  async update(id: string, dto: UpdateAssignmentDto) {
+    const assignment = await this.assignmentModel.findById(id);
+    if (!assignment) {
+      throw new NotFoundException('Affectation non trouvée');
+    }
 
-  // ✅ Chauffeur
-  if (dto.driver && dto.driver.trim() !== '') {
-    if (!isValidObjectId(dto.driver)) {
-      throw new BadRequestException('Identifiant du chauffeur invalide');
-    }
-    const driver = await this.userModel.findById(dto.driver);
-    if (!driver || driver.role !== UserRole.DRIVER) {
-      throw new BadRequestException('Le nouveau chauffeur est invalide');
-    }
-  } else {
-    dto.driver = undefined;
-  }
+    const updateData: Partial<Assignment> = {};
 
-  // ✅ Superviseur
-  if (dto.supervisor && dto.supervisor.trim() !== '') {
-    if (!isValidObjectId(dto.supervisor)) {
-      throw new BadRequestException('Identifiant du superviseur invalide');
+    // Vérifier chauffeurs
+    if (dto.drivers) {
+      const validDrivers: Types.ObjectId[] = [];
+      for (const driverId of dto.drivers) {
+        if (!isValidObjectId(driverId)) {
+          throw new BadRequestException(`ID chauffeur invalide : ${driverId}`);
+        }
+        const driver = await this.userModel.findById(driverId);
+        if (!driver || driver.role !== UserRole.DRIVER) {
+          throw new BadRequestException(`Chauffeur non valide : ${driverId}`);
+        }
+        validDrivers.push(driver._id as Types.ObjectId);
+      }
+      updateData.drivers = validDrivers;
     }
-    const supervisor = await this.userModel.findById(dto.supervisor);
-    if (!supervisor || supervisor.role !== UserRole.SUPERVISOR) {
-      throw new BadRequestException('Le nouveau superviseur est invalide');
-    }
-  } else {
-    dto.supervisor = undefined;
-  }
 
-  // ✅ Site
-  if (dto.site && dto.site.trim() !== '') {
-    if (!isValidObjectId(dto.site)) {
-      throw new BadRequestException('Identifiant du site invalide');
+    // Vérifier superviseurs
+    if (dto.supervisors) {
+      const validSupervisors: Types.ObjectId[] = [];
+      for (const supId of dto.supervisors) {
+        if (!isValidObjectId(supId)) {
+          throw new BadRequestException(
+            `ID superviseur invalide : ${supId}`,
+          );
+        }
+        const supervisor = await this.userModel.findById(supId);
+        if (!supervisor || supervisor.role !== UserRole.SUPERVISOR) {
+          throw new BadRequestException(`Superviseur non valide : ${supId}`);
+        }
+        validSupervisors.push(supervisor._id as Types.ObjectId);
+      }
+      updateData.supervisors = validSupervisors;
     }
-    const site = await this.siteModel.findById(dto.site);
-    if (!site) {
-      throw new BadRequestException('Le nouveau site est introuvable');
-    }
-  } else {
-    dto.site = undefined;
-  }
 
-  await this.assignmentModel.findByIdAndUpdate(id, dto);
-  return this.findOne(id); // retourne la version mise à jour avec populate
-}
+    if (dto.site) {
+      if (!isValidObjectId(dto.site)) {
+        throw new BadRequestException('ID de site invalide');
+      }
+      const site = await this.siteModel.findById(dto.site);
+      if (!site) {
+        throw new BadRequestException('Site introuvable');
+      }
+      updateData.site = site._id as Types.ObjectId;
+    }
+
+    await this.assignmentModel.findByIdAndUpdate(id, updateData);
+    return this.findOne(id);
+  }
 
   async remove(id: string) {
     const assignment = await this.assignmentModel.findById(id);
@@ -171,7 +179,8 @@ async update(id: string, dto: UpdateAssignmentDto) {
   }
 
   async getUnassignedDrivers() {
-    const assignedDrivers = await this.assignmentModel.distinct('driver');
+    const assignedDrivers = await this.assignmentModel.distinct('drivers');
+    console.log(assignedDrivers, 'assigned');
     return this.userModel
       .find({
         role: UserRole.DRIVER,
@@ -182,8 +191,9 @@ async update(id: string, dto: UpdateAssignmentDto) {
 
   async getUnassignedSupervisors() {
     const assignedSupervisors = await this.assignmentModel.distinct(
-      'supervisor',
+      'supervisors',
     );
+    console.log(assignedSupervisors,'assgnbed')
     return this.userModel
       .find({
         role: UserRole.SUPERVISOR,

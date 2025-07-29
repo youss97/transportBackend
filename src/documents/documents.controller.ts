@@ -103,7 +103,10 @@ export class DocumentsController {
     @Param('id') id: string,
     @Body() updateDocumentStatusDto: UpdateDocumentStatusDto,
   ) {
-    return this.documentsService.updateDocumentStatus(id, updateDocumentStatusDto.status);
+    return this.documentsService.updateDocumentStatus(
+      id,
+      updateDocumentStatusDto.status,
+    );
   }
   @Get(':id/download')
   @ApiOperation({ summary: 'Télécharger un document' })
@@ -135,6 +138,10 @@ export class DocumentsController {
     return this.documentsService.findByTypeAndUser(type, userId);
   }
 
-
-
+  @Get('identity-folder/:userId')
+  @ApiOperation({ summary: "Récupérer le dossier d'identité d’un utilisateur" })
+  @Roles(UserRole.ADMIN, UserRole.SUPERVISOR)
+  async getIdentityFolder(@Param('userId') userId: string) {
+    return this.documentsService.getIdentityFolderByUserId(userId);
+  }
 }
