@@ -180,7 +180,6 @@ export class AssignmentService {
 
   async getUnassignedDrivers() {
     const assignedDrivers = await this.assignmentModel.distinct('drivers');
-    console.log(assignedDrivers, 'assigned');
     return this.userModel
       .find({
         role: UserRole.DRIVER,
@@ -193,7 +192,6 @@ export class AssignmentService {
     const assignedSupervisors = await this.assignmentModel.distinct(
       'supervisors',
     );
-    console.log(assignedSupervisors,'assgnbed')
     return this.userModel
       .find({
         role: UserRole.SUPERVISOR,

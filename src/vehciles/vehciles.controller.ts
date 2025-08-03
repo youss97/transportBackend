@@ -35,7 +35,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 @ApiTags('vehicles')
 @ApiBearerAuth()
 @Controller('vehicles')
-// @UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
@@ -51,6 +51,7 @@ export class VehiclesController {
   })
 async createVehicle(
   @Body() createVehicleDto: CreateVehicleDto,
+    @CurrentCompany() companyId: string,
   @UploadedFiles()
   files: {
     carteGriseFile?: Express.Multer.File[];
@@ -58,7 +59,7 @@ async createVehicle(
     technicalControlFile?: Express.Multer.File[];
   },
 ) {
-  return this.vehiclesService.create(createVehicleDto, files);
+  return this.vehiclesService.create(createVehicleDto, files,companyId);
 }
 
 

@@ -3,8 +3,8 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { User } from 'src/schemas/user.schema';
 import { CreateUserDto } from 'src/schemas/create-user.dto';
@@ -17,6 +17,7 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly cloudinaryService: CloudinaryService,
+    @InjectConnection() private readonly connection: Connection,
   ) {}
 
   async create(
@@ -279,5 +280,44 @@ export class UsersService {
     const user = await this.userModel.findById(userId);
     if (!user || user.refreshToken !== refreshToken) return null;
     return user;
+  }
+  async deleteUserAndReferences(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Utilisateur non trouvé');
+
+    await this.userModel.deleteOne({ _id: userId });
+
+    const collections = await this.connection.db.listCollections().toArray();
+
+    for (const col of collections) {
+      const collection = this.connection.db.collection(col.name);
+      try {
+        const result = await collection.deleteMany({
+          $or: [
+            { driver: new Types.ObjectId(userId) },
+            { currentDriver: new Types.ObjectId(userId) },
+            { userId: new Types.ObjectId(userId) },
+            { owner: new Types.ObjectId(userId) },
+
+            { _id: new Types.ObjectId(userId) },
+          ],
+        });
+
+        if (result.deletedCount > 0) {
+          console.log(`✅ ${result.deletedCount} supprimés de ${col.name}`);
+        }
+      } catch (err) {
+        console.warn(`⚠️ Erreur suppression ${col.name} : ${err.message}`);
+      }
+    }
+
+    return { message: 'Utilisateur et ses références supprimés' };
+  }
+    async delete(id: string) {
+    const result = await this.userModel.findByIdAndDelete(id);
+    if (!result) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+    return { message: 'Utilisateur supprimé avec succès' };
   }
 }

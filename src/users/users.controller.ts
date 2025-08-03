@@ -70,21 +70,27 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-@Get()
-@ApiOperation({ summary: 'Lister les utilisateurs avec pagination et recherche' })
-@Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-@ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-@ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-@ApiQuery({ name: 'search', required: false, type: String, description: 'Filtrer par frstName,lastName,role,email' })
-findAll(
-  @CurrentCompany() companyId: string,
-  @Query('page') page = 1,
-  @Query('limit') limit = 10,
-  @Query('search') search = '',
-) {
-  return this.usersService.findAll(companyId, +page, +limit, search);
-}
-
+  @Get()
+  @ApiOperation({
+    summary: 'Lister les utilisateurs avec pagination et recherche',
+  })
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Filtrer par frstName,lastName,role,email',
+  })
+  findAll(
+    @CurrentCompany() companyId: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search = '',
+  ) {
+    return this.usersService.findAll(companyId, +page, +limit, search);
+  }
 
   @Get('drivers')
   @ApiOperation({ summary: 'Lister tous les chauffeurs' })
@@ -149,4 +155,9 @@ findAll(
   //     role,
   //   });
   // }
+  @Delete(':id')
+  @ApiOperation({ summary: 'Supprimer' })
+  async deleteUser(@Param('id') id: string) {
+    return this.usersService.delete(id);
+  }
 }

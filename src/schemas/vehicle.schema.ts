@@ -3,19 +3,19 @@ import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Vehicle extends Document {
-  // AJOUT CRUCIAL : ID de la société
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   company: Types.ObjectId;
-  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
-  currentDriver?: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  currentDriver?: Types.ObjectId; // Optionnel
+
+  @Prop()
   licensePlate: string;
 
-  @Prop({ required: true })
+  @Prop()
   brand: string;
 
-  @Prop({ required: true })
+  @Prop()
   modelCar: string;
 
   @Prop({ required: false })
@@ -34,18 +34,19 @@ export class Vehicle extends Document {
   nextMaintenanceKm: number;
 
   @Prop()
-  insuranceExpirationDate: Date;
+  insuranceExpirationDate: string;
 
   @Prop()
-  technicalControlDate: Date;
+  technicalControlDate: string;
 
   @Prop({ default: true })
   isActive: boolean;
-  @Prop({ required: false })
+
+  @Prop()
   carteGriseNumber?: string;
 
-  @Prop({ type: Date })
-  carteGriseRegistrationDate?: Date;
+  @Prop()
+  carteGriseRegistrationDate?: string;
 
   @Prop()
   carteGriseBrand?: string;
@@ -68,19 +69,18 @@ export class Vehicle extends Document {
   @Prop()
   insuranceType?: string;
 
-  @Prop({ type: Date })
-  insuranceStartDate?: Date;
-
-  @Prop({ type: Date })
-  insuranceEndDate?: Date;
+  @Prop()
+  insuranceStartDate?: string;
 
   @Prop()
-  lastOilChangeDate?: Date;
+  insuranceEndDate?: string;
 
-  @Prop({ type: Date })
-  technicalControlExpirationDate?: Date;
+  @Prop()
+  lastOilChangeDate?: string;
 
-  // Champs fichiers
+  @Prop()
+  technicalControlExpirationDate?: string;
+
   @Prop()
   carteGriseFile?: string;
 

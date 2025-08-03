@@ -3,11 +3,9 @@ import {
   IsOptional,
   IsNumber,
   IsDateString,
-  IsEnum,
   IsMongoId,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { VehicleStatus } from 'src/enums/vehicle-status.enum';
 
 export class CreateVehicleDto {
   @ApiProperty()
@@ -26,13 +24,12 @@ export class CreateVehicleDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsNumber()
   year?: number;
 
-  @ApiProperty({ enum: VehicleStatus, required: false })
+  @ApiProperty({ required: false })
   @IsOptional()
-  @IsEnum(VehicleStatus)
-  status?: VehicleStatus;
+  @IsString()
+  status?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -49,14 +46,9 @@ export class CreateVehicleDto {
   @IsString()
   fuelType?: string;
 
-  @ApiProperty({
-    description: 'ID Mongo du chauffeur assigné (facultatif)',
-    required: false,
-    type: String,
-  })
+  @ApiProperty({ required: false })
   @IsOptional()
-  @IsMongoId()
-  currentDriver?: string;
+  currentDriver?: string; // Si c'est un ID Mongo valide
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -85,7 +77,6 @@ export class CreateVehicleDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsNumber()
   kilometersAtPurchase?: number;
 
   @ApiProperty({ required: false })
@@ -118,32 +109,15 @@ export class CreateVehicleDto {
   @IsDateString()
   technicalControlExpirationDate?: string;
 
-  // Fichiers en tant qu'URL (upload séparé)
- @ApiProperty({
-  required: false,
-  description: 'Fichier carte grise',
-  type: 'string',
-  format: 'binary',
-})
-@IsOptional()
-carteGriseFile?: any;
+  @ApiProperty({ required: false, description: 'Fichier carte grise', type: 'string', format: 'binary' })
+  @IsOptional()
+  carteGriseFile?: any;
 
-@ApiProperty({
-  required: false,
-  description: "Fichier d'assurance",
-  type: 'string',
-  format: 'binary',
-})
-@IsOptional()
-insuranceFile?: any;
+  @ApiProperty({ required: false, description: "Fichier d'assurance", type: 'string', format: 'binary' })
+  @IsOptional()
+  insuranceFile?: any;
 
-@ApiProperty({
-  required: false,
-  description: "Fichier contrôle technique",
-  type: 'string',
-  format: 'binary',
-})
-@IsOptional()
-technicalControlFile?: any;
-
+  @ApiProperty({ required: false, description: "Fichier contrôle technique", type: 'string', format: 'binary' })
+  @IsOptional()
+  technicalControlFile?: any;
 }

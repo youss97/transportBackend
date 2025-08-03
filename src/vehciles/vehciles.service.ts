@@ -25,6 +25,7 @@ async create(
     insuranceFile?: Express.Multer.File[];
     technicalControlFile?: Express.Multer.File[];
   },
+   companyId: string, 
 ) {
   const fileUrls = {
     carteGriseFile: null,
@@ -47,6 +48,7 @@ async create(
 
   const newVehicle = new this.vehicleModel({
     ...dto,
+    company: companyId,
     carteGriseFile: fileUrls.carteGriseFile,
     insuranceFile: fileUrls.insuranceFile,
     technicalControlFile: fileUrls.technicalControlFile,
