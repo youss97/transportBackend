@@ -7,9 +7,6 @@ export class Contact extends Document {
   name: string;
 
   @Prop({ required: true })
-  category: string;
-
-  @Prop({ required: true })
   details: string;
 
   @Prop({ required: true })

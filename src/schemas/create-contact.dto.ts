@@ -8,10 +8,6 @@ export class CreateContactDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  category: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
   details: string;
 
   @ApiProperty()
