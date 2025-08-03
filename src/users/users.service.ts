@@ -336,27 +336,28 @@ export class UsersService {
 
     return { message: 'Utilisateur et ses références supprimés' };
   }
-  async deleteAccount(dto: DeleteAccountDto) {
-    console.log(dto,'dtpp')
-    const user = await this.userModel.findOne({ email: dto.email });
-    console.log(user,'user')
-    if (!user) {
-      throw new NotFoundException('Utilisateur non trouvé');
-    }
 
-    const passwordMatch = await bcrypt.compare(dto.password, user.password);
-    if (!passwordMatch) {
-      throw new UnauthorizedException('Mot de passe incorrect');
-    }
+ async deleteAccount(dto: DeleteAccountDto) {
+  const user = await this.userModel.findOne({ email: dto.email });
+  if (!user) {
+    throw new NotFoundException('Utilisateur non trouvé');
+  }
 
-    const userId = user._id;
+  const passwordMatch = await bcrypt.compare(dto.password, user.password);
+  if (!passwordMatch) {
+    throw new UnauthorizedException('Mot de passe incorrect');
+  }
 
-    // 🔄 Suppression des données liées
+  const userId = user._id;
+
+  if (dto.deleteOnlyAccount) {
+    // ❌ Supprimer uniquement le compte
+    await this.userModel.findByIdAndDelete(userId);
+    return { message: 'Compte utilisateur supprimé avec succès (données conservées)' };
+  } else {
+    // ❌ Supprimer uniquement les données liées
     await Promise.all([
-      this.assignmentModel.updateMany(
-        {},
-        { $pull: { drivers: userId, supervisors: userId } },
-      ),
+      this.assignmentModel.updateMany({}, { $pull: { drivers: userId, supervisors: userId } }),
       this.activityModel.deleteMany({ driver: userId }),
       this.chargementModel.deleteMany({ driver: userId }),
       this.documentModel.deleteMany({ owner: userId }),
@@ -364,19 +365,10 @@ export class UsersService {
       this.leaveModel.deleteMany({ user: userId }),
       this.panneModel.deleteMany({ userId }),
       this.pointageModel.deleteMany({ driver: userId }),
-      this.vehicleModel.updateMany(
-        { currentDriver: userId },
-        { $unset: { currentDriver: '' } },
-      ),
+      this.vehicleModel.updateMany({ currentDriver: userId }, { $unset: { currentDriver: '' } }),
     ]);
-
-    // ❌ Si deleteOnlyData est true → ne pas supprimer le compte
-    if (dto.deleteOnlyData) {
-      return { message: 'Données de l’utilisateur supprimées avec succès' };
-    }
-
-    // ✅ Sinon, supprimer aussi le compte
-    await this.userModel.findByIdAndDelete(userId);
-    return { message: 'Utilisateur et ses données supprimés avec succès' };
+    return { message: 'Données de l’utilisateur supprimées avec succès (compte conservé)' };
   }
+}
+
 }

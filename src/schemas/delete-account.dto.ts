@@ -15,5 +15,5 @@ export class DeleteAccountDto {
     description: 'Supprimer uniquement les données sans supprimer le compte (optionnel)',
   })
   @IsOptional()
-  deleteOnlyData?: boolean;
+  deleteOnlyAccount?: boolean;
 }

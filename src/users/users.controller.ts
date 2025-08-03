@@ -157,7 +157,7 @@ export class UsersController {
   //   });
   // }
   // users.controller.ts
-  @Post('delete-account')
+  @Delete(':id/delete-account')
   @ApiOperation({
     summary: 'Supprimer le compte ou les données de l’utilisateur',
   })
