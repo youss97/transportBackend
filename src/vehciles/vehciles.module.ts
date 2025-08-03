@@ -12,6 +12,6 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
   ],
   controllers: [VehiclesController],
   providers: [VehiclesService,CloudinaryService],
-  exports: [VehiclesService],
+  exports: [VehiclesService,MongooseModule],
 })
 export class VehiclesModule {}

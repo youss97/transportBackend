@@ -14,6 +14,6 @@ import { Pointage, PointageSchema } from 'src/schemas/pointage.schema';
   ],
   controllers: [PointageController],
   providers: [PointageService],
-  exports: [PointageService],
+  exports: [PointageService,MongooseModule],
 })
 export class PointageModule {}

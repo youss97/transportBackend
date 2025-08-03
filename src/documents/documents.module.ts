@@ -10,8 +10,9 @@ import { CloudinaryProvider } from 'src/cloudinary/cloudinary.provider';
   imports: [
     MongooseModule.forFeature([
       { name: DocumentEntity.name, schema: DocumentSchema },
-    ]),
+    ]),    
   ],
+  
   controllers: [DocumentsController],
   providers: [DocumentsService, CloudinaryService, CloudinaryProvider],
   exports: [DocumentsService],

@@ -8,5 +8,6 @@ import { ChargmentDechargement, ChargmentDechargementSchemas } from 'src/schemas
   imports: [MongooseModule.forFeature([{ name: ChargmentDechargement.name, schema: ChargmentDechargementSchemas }])],
   controllers: [ChargementDechargementController],
   providers: [ChargementDechargementService],
+  exports :[ChargementDechargementService, MongooseModule]
 })
 export class ChargementDechargementModule {}

@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model, Types } from 'mongoose';
@@ -11,11 +12,33 @@ import { CreateUserDto } from 'src/schemas/create-user.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from 'src/enums/user-role.enum';
+import { DeleteAccountDto } from 'src/schemas/delete-account.dto';
+import { Assignment } from 'src/schemas/assignment.schema';
+import { Activity } from 'src/schemas/activity.schema';
+import { ChargmentDechargement } from 'src/schemas/chargement-dechargement.schema';
+import { DocumentEntity } from 'src/schemas/document.schema';
+import { Gazoil } from 'src/schemas/gazoil.schema';
+import { Leave } from 'src/schemas/leave.schema';
+import { Vehicle } from 'src/schemas/vehicle.schema';
+import { Pointage } from 'src/schemas/pointage.schema';
+import { Panne } from 'src/schemas/panne.schema';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Assignment.name) private assignmentModel: Model<Assignment>,
+    @InjectModel(Activity.name) private activityModel: Model<Activity>,
+    @InjectModel(ChargmentDechargement.name)
+    private chargementModel: Model<ChargmentDechargement>,
+    @InjectModel(DocumentEntity.name)
+    private documentModel: Model<DocumentEntity>,
+    @InjectModel(Gazoil.name) private gazoilModel: Model<Gazoil>,
+    @InjectModel(Leave.name) private leaveModel: Model<Leave>,
+    @InjectModel(Panne.name) private panneModel: Model<Panne>,
+    @InjectModel(Pointage.name) private pointageModel: Model<Pointage>,
+    @InjectModel(Vehicle.name) private vehicleModel: Model<Vehicle>,
+
     private readonly cloudinaryService: CloudinaryService,
     @InjectConnection() private readonly connection: Connection,
   ) {}
@@ -313,11 +336,47 @@ export class UsersService {
 
     return { message: 'Utilisateur et ses références supprimés' };
   }
-    async delete(id: string) {
-    const result = await this.userModel.findByIdAndDelete(id);
-    if (!result) {
+  async deleteAccount(dto: DeleteAccountDto) {
+    console.log(dto,'dtpp')
+    const user = await this.userModel.findOne({ email: dto.email });
+    console.log(user,'user')
+    if (!user) {
       throw new NotFoundException('Utilisateur non trouvé');
     }
-    return { message: 'Utilisateur supprimé avec succès' };
+
+    const passwordMatch = await bcrypt.compare(dto.password, user.password);
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Mot de passe incorrect');
+    }
+
+    const userId = user._id;
+
+    // 🔄 Suppression des données liées
+    await Promise.all([
+      this.assignmentModel.updateMany(
+        {},
+        { $pull: { drivers: userId, supervisors: userId } },
+      ),
+      this.activityModel.deleteMany({ driver: userId }),
+      this.chargementModel.deleteMany({ driver: userId }),
+      this.documentModel.deleteMany({ owner: userId }),
+      this.gazoilModel.deleteMany({ driverId: userId }),
+      this.leaveModel.deleteMany({ user: userId }),
+      this.panneModel.deleteMany({ userId }),
+      this.pointageModel.deleteMany({ driver: userId }),
+      this.vehicleModel.updateMany(
+        { currentDriver: userId },
+        { $unset: { currentDriver: '' } },
+      ),
+    ]);
+
+    // ❌ Si deleteOnlyData est true → ne pas supprimer le compte
+    if (dto.deleteOnlyData) {
+      return { message: 'Données de l’utilisateur supprimées avec succès' };
+    }
+
+    // ✅ Sinon, supprimer aussi le compte
+    await this.userModel.findByIdAndDelete(userId);
+    return { message: 'Utilisateur et ses données supprimés avec succès' };
   }
 }

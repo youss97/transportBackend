@@ -9,5 +9,6 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
   imports: [MongooseModule.forFeature([{ name: Leave.name, schema: LeaveSchema }])],
   providers: [LeaveService,CloudinaryService],
   controllers: [LeaveController],
+  exports: [LeaveService, MongooseModule]
 })
 export class LeaveModule {}

@@ -10,5 +10,6 @@ import { Gazoil, GazoilSchema } from 'src/schemas/gazoil.schema';
   imports: [MongooseModule.forFeature([{ name: Gazoil.name, schema: GazoilSchema }])],
   controllers: [GazoilController],
   providers: [GazoilService, CloudinaryService],
+  exports: [GazoilService, MongooseModule]
 })
 export class GazoilModule {}

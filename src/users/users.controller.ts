@@ -29,6 +29,7 @@ import { CurrentCompany } from 'src/decorators/company.decorator';
 import { CompanyAccessGuard } from 'src/guards/company-access.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { DeleteAccountDto } from 'src/schemas/delete-account.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -155,9 +156,12 @@ export class UsersController {
   //     role,
   //   });
   // }
-  @Delete(':id')
-  @ApiOperation({ summary: 'Supprimer' })
-  async deleteUser(@Param('id') id: string) {
-    return this.usersService.delete(id);
+  // users.controller.ts
+  @Post('delete-account')
+  @ApiOperation({
+    summary: 'Supprimer le compte ou les données de l’utilisateur',
+  })
+  async deleteAccount(@Body() dto: DeleteAccountDto) {
+    return this.usersService.deleteAccount(dto);
   }
 }

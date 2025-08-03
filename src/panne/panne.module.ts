@@ -10,5 +10,6 @@ import { Panne, PanneSchema } from 'src/schemas/panne.schema';
   imports: [MongooseModule.forFeature([{ name: Panne.name, schema: PanneSchema }])],
   controllers: [PanneController],
   providers: [PanneService, CloudinaryService],
+  exports: [PanneService, MongooseModule]
 })
 export class PanneModule {}
