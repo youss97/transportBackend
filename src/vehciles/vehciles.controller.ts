@@ -120,7 +120,7 @@ async createVehicle(
     @Param('id') id: string,
     @Body() updateData: UpdateVehicleDto,
     @CurrentCompany() companyId: string,
-    @UploadedFile() carteGriseFile: Express.Multer.File,
+    @UploadedFile() carteGriseFile?: Express.Multer.File,
   ) {
     return this.vehiclesService.updateVehicle(id, companyId, updateData, carteGriseFile);
   }
