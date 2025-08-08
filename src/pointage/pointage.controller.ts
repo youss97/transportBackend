@@ -109,45 +109,45 @@ export class PointageController {
     return this.pointageService.findOne(id, userId);
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: 'modifier pointage' })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'photoSelfie', maxCount: 1 },
-      { name: 'photoKilometrage', maxCount: 1 },
-    ]),
-  )
-  async update(
-    @Param('id') id: string,
-    @Body() updatePointageDto: UpdatePointageDto,
-    @CurrentUser() user: any,
-    @UploadedFiles()
-    files: {
-      photoSelfie?: Express.Multer.File[];
-      photoKilometrage?: Express.Multer.File[];
-    },
-  ) {
-    const userId = user.userId;
+@Patch(':id')
+@ApiOperation({ summary: 'modifier pointage' })
+@ApiConsumes('multipart/form-data')
+@UseInterceptors(
+  FileFieldsInterceptor([
+    { name: 'photoSelfie', maxCount: 1 },
+    { name: 'photoKilometrage', maxCount: 1 },
+  ]),
+)
+async update(
+  @Param('id') id: string,
+  @Body() updatePointageDto: UpdatePointageDto,
+  @CurrentUser() user: any,
+  @UploadedFiles()
+  files: {
+    photoSelfie?: Express.Multer.File[];
+    photoKilometrage?: Express.Multer.File[];
+  },
+) {
+  const userId = user.userId;
 
-    // Upload des nouvelles photos si présentes
-    if (files?.photoSelfie?.[0]) {
-      updatePointageDto.photoSelfie = await this.pointageService.uploadPhoto(
-        files.photoSelfie[0],
-        'selfie',
-      );
-    }
-
-    if (files?.photoKilometrage?.[0]) {
-      updatePointageDto.photoKilometrage =
-        await this.pointageService.uploadPhoto(
-          files.photoKilometrage[0],
-          'kilometrage',
-        );
-    }
-
-    return this.pointageService.update(id, updatePointageDto, userId);
+  // Upload des nouvelles photos si elles sont présentes
+  if (files?.photoSelfie?.[0]) {
+    updatePointageDto.photoSelfie = await this.pointageService.uploadPhoto(
+      files.photoSelfie[0],
+      'selfie',
+    );
   }
+
+  if (files?.photoKilometrage?.[0]) {
+    updatePointageDto.photoKilometrage = await this.pointageService.uploadPhoto(
+      files.photoKilometrage[0],
+      'kilometrage',
+    );
+  }
+
+  // Appel du service avec DTO nettoyé
+  return this.pointageService.update(id, updatePointageDto, userId);
+}
 
   @Delete(':id')
   @ApiOperation({ summary: 'supprimer pointage' })

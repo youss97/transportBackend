@@ -77,27 +77,31 @@ export class PointageService {
     return pointage;
   }
 
-  async update(
-    id: string,
-    updatePointageDto: UpdatePointageDto,
-    userId: string,
-  ): Promise<Pointage> {
-    const updatedPointage = await this.pointageModel
-      .findOneAndUpdate(
-        {
-          _id: new Types.ObjectId(id),
-          driver: new Types.ObjectId(userId),
-        },
-        updatePointageDto,
-      )
-      .exec();
+ async update(
+  id: string,
+  updatePointageDto: UpdatePointageDto,
+  userId: string,
+): Promise<Pointage> {
+  // On supprime tous les champs undefined pour éviter d'écraser les valeurs existantes
+  const cleanDto = Object.fromEntries(
+    Object.entries(updatePointageDto).filter(([_, v]) => v !== undefined)
+  );
 
-    if (!updatedPointage) {
-      throw new NotFoundException('Pointage not found');
-    }
+  const updatedPointage = await this.pointageModel.findOneAndUpdate(
+    {
+      _id: new Types.ObjectId(id),
+      driver: new Types.ObjectId(userId),
+    },
+    { $set: cleanDto }, // On ne met à jour que les champs envoyés
+    { new: true } // Retourne le document après update
+  );
 
-    return updatedPointage;
+  if (!updatedPointage) {
+    throw new NotFoundException('Pointage not found');
   }
+
+  return updatedPointage;
+}
 
   async uploadPhoto(
     file: Express.Multer.File,
