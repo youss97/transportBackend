@@ -21,7 +21,11 @@ import {
   ApiConsumes,
   ApiResponse,
 } from '@nestjs/swagger';
-import { FileFieldsInterceptor, FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+  FilesInterceptor,
+} from '@nestjs/platform-express';
 
 import { CreateVehicleDto } from 'src/schemas/create-vehicle.dto';
 import { UpdateVehicleDto } from 'src/schemas/update-vehicle.dto';
@@ -40,28 +44,29 @@ export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
   @Post()
-  @UseInterceptors( FileFieldsInterceptor([
-    { name: 'carteGriseFile', maxCount: 1 },
-    { name: 'insuranceFile', maxCount: 1 },
-    { name: 'technicalControlFile', maxCount: 1 },
-  ]),)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'carteGriseFile', maxCount: 1 },
+      { name: 'insuranceFile', maxCount: 1 },
+      { name: 'technicalControlFile', maxCount: 1 },
+    ]),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     type: CreateVehicleDto,
   })
-async createVehicle(
-  @Body() createVehicleDto: CreateVehicleDto,
+  async createVehicle(
+    @Body() createVehicleDto: CreateVehicleDto,
     @CurrentCompany() companyId: string,
-  @UploadedFiles()
-  files: {
-    carteGriseFile?: Express.Multer.File[];
-    insuranceFile?: Express.Multer.File[];
-    technicalControlFile?: Express.Multer.File[];
-  },
-) {
-  return this.vehiclesService.create(createVehicleDto, files,companyId);
-}
-
+    @UploadedFiles()
+    files: {
+      carteGriseFile?: Express.Multer.File[];
+      insuranceFile?: Express.Multer.File[];
+      technicalControlFile?: Express.Multer.File[];
+    },
+  ) {
+    return this.vehiclesService.create(createVehicleDto, files, companyId);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Lister tous les véhicules' })
@@ -122,7 +127,12 @@ async createVehicle(
     @CurrentCompany() companyId: string,
     @UploadedFile() carteGriseFile?: Express.Multer.File,
   ) {
-    return this.vehiclesService.updateVehicle(id, companyId, updateData, carteGriseFile);
+    return this.vehiclesService.updateVehicle(
+      id,
+      companyId,
+      updateData,
+      carteGriseFile,
+    );
   }
 
   @Delete(':id')

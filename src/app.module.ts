@@ -21,6 +21,7 @@ import { LeaveModule } from './leave/leave.module';
 import { GazoilModule } from './gazoil/gazoil.module';
 import { PanneModule } from './panne/panne.module';
 import { ContactModule } from './contact/contact.module';
+import { TyreChangeModule } from './tyre-change/tyre-change.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { ContactModule } from './contact/contact.module';
     GazoilModule,
     PanneModule,
     ContactModule,
+    TyreChangeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

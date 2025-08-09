@@ -101,29 +101,42 @@ async getTodayChargementDechargement(@CurrentUser() user: any) {
     return this.chargementDechargementService.findOne(id, user.userId);
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: 'Modifier un chargement/dechargement' })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'photo', maxCount: 1 }]))
-  async update(
-    @Param('id') id: string,
-    @Body() updateDto: UpdateChargementDechargementDto,
-    @CurrentUser() user: any,
-    @UploadedFiles() files: { photo?: Express.Multer.File[] },
-  ) {
-    if (files?.photo?.[0]) {
-      updateDto.photo = await this.chargementDechargementService.uploadPhoto(
-        files.photo[0],
-        'photo',
-      );
-    }
-
-    return this.chargementDechargementService.update(
-      id,
-      updateDto,
-      user.userId,
+@Patch(':id')
+@ApiOperation({ summary: 'Modifier un chargement/dechargement' })
+@ApiConsumes('multipart/form-data')
+@UseInterceptors(
+  FileFieldsInterceptor([
+    { name: 'photo', maxCount: 1 },
+    { name: 'balancePhoto', maxCount: 1 }, // ✅ Ajout du champ
+  ]),
+)
+async update(
+  @Param('id') id: string,
+  @Body() updateDto: UpdateChargementDechargementDto,
+  @CurrentUser() user: any,
+  @UploadedFiles() files: { photo?: Express.Multer.File[]; balancePhoto?: Express.Multer.File[] },
+) {
+  if (files?.photo?.[0]) {
+    updateDto.photo = await this.chargementDechargementService.uploadPhoto(
+      files.photo[0],
+      'photo',
     );
   }
+
+  if (files?.balancePhoto?.[0]) {
+    updateDto.balancePhoto = await this.chargementDechargementService.uploadPhoto(
+      files.balancePhoto[0],
+      'balance',
+    );
+  }
+
+  return this.chargementDechargementService.update(
+    id,
+    updateDto,
+    user.userId,
+  );
+}
+
 
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer un chargement/dechargement' })
