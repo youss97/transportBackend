@@ -85,10 +85,10 @@ export class Vehicle extends Document {
   carteGriseFile?: string;
 
   @Prop()
-  insuranceFileUrl?: string;
+  insuranceFile?: string;
 
   @Prop()
-  technicalControlFileUrl?: string;
+  technicalControlFile?: string;
 }
 
 export const VehicleSchema = SchemaFactory.createForClass(Vehicle);

@@ -116,24 +116,36 @@ export class VehiclesController {
     return this.vehiclesService.unassignDriver(id, companyId);
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: 'Mettre à jour un véhicule' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ type: UpdateVehicleDto })
-  @UseInterceptors(FileInterceptor('carteGriseFile'))
-  async updateVehicle(
-    @Param('id') id: string,
-    @Body() updateData: UpdateVehicleDto,
-    @CurrentCompany() companyId: string,
-    @UploadedFile() carteGriseFile?: Express.Multer.File,
-  ) {
-    return this.vehiclesService.updateVehicle(
-      id,
-      companyId,
-      updateData,
-      carteGriseFile,
-    );
-  }
+ @Patch(':id')
+@ApiOperation({ summary: 'Mettre à jour un véhicule' })
+@ApiConsumes('multipart/form-data')
+@ApiBody({ type: UpdateVehicleDto })
+@UseInterceptors(
+  FileFieldsInterceptor([
+    { name: 'carteGriseFile', maxCount: 1 },
+    { name: 'insuranceFile', maxCount: 1 },
+    { name: 'technicalControlFile', maxCount: 1 },
+  ]),
+)
+async updateVehicle(
+  @Param('id') id: string,
+  @Body() updateData: UpdateVehicleDto,
+  @CurrentCompany() companyId: string,
+  @UploadedFiles()
+  files: {
+    carteGriseFile?: Express.Multer.File[];
+    insuranceFile?: Express.Multer.File[];
+    technicalControlFile?: Express.Multer.File[];
+  },
+) {
+  return this.vehiclesService.updateVehicle(
+    id,
+    companyId,
+    updateData,
+    files,
+  );
+}
+
 
   @Delete(':id')
   @ApiOperation({ summary: 'Supprimer un véhicule' })

@@ -6,6 +6,7 @@ import {
   IsMongoId,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class CreateVehicleDto {
   @ApiProperty()
@@ -34,10 +35,14 @@ export class CreateVehicleDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsDateString()
+  @Transform(({ value }) => value === '' ? undefined : value)
+
   insuranceStartDate?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
+
   @IsDateString()
   insuranceEndDate?: string;
 
@@ -57,6 +62,8 @@ export class CreateVehicleDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
+
   @IsDateString()
   carteGriseRegistrationDate?: string;
 
@@ -96,16 +103,22 @@ export class CreateVehicleDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
+
   @IsDateString()
   lastOilChangeDate?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
+
   @IsDateString()
   technicalControlDate?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @Transform(({ value }) => value === '' ? undefined : value)
+
   @IsDateString()
   technicalControlExpirationDate?: string;
 

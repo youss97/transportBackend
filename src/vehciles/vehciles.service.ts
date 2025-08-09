@@ -156,37 +156,50 @@ async create(
     return vehicle;
   }
 
-  async updateVehicle(
-    id: string,
-    companyId: string,
-    updateData: UpdateVehicleDto,
-    carteGriseFile?: Express.Multer.File, // Fichier carte grise (optionnel)
-  ): Promise<Vehicle> {
-    // Récupérer le véhicule existant
-    const existingVehicle = await this.vehicleModel.findOne({
-      _id: id,
-      company: companyId,
-    });
+async updateVehicle(
+  id: string,
+  companyId: string,
+  updateData: UpdateVehicleDto,
+  files?: {
+    carteGriseFile?: Express.Multer.File[];
+    insuranceFile?: Express.Multer.File[];
+    technicalControlFile?: Express.Multer.File[];
+  },
+): Promise<Vehicle> {
+  const existingVehicle = await this.vehicleModel.findOne({
+    _id: id,
+    company: companyId,
+  });
 
-    if (!existingVehicle) {
-      throw new NotFoundException('Véhicule non trouvé ou accès refusé');
-    }
-
-    // Gérer le fichier carte grise (si présent)
-    if (carteGriseFile) {
-      const carteGriseUploadResponse = await this.cloudinaryService.uploadFile(carteGriseFile);
-      updateData.carteGriseFile= carteGriseUploadResponse.secure_url;
-    }
-
-    // Mettre à jour les autres champs
-    const updatedVehicle = await this.vehicleModel.findOneAndUpdate(
-      { _id: id, company: companyId },
-      { ...updateData, updatedAt: new Date() },
-      { new: true, runValidators: true },
-    );
-
-    return updatedVehicle;
+  if (!existingVehicle) {
+    throw new NotFoundException('Véhicule non trouvé ou accès refusé');
   }
+
+  // Carte grise
+  if (files?.carteGriseFile?.[0]) {
+    const upload = await this.cloudinaryService.uploadFile(files.carteGriseFile[0]);
+    updateData.carteGriseFile = upload.secure_url;
+  }
+
+  // Assurance
+  if (files?.insuranceFile?.[0]) {
+    const upload = await this.cloudinaryService.uploadFile(files.insuranceFile[0]);
+    updateData.insuranceFile = upload.secure_url;
+  }
+
+  // Contrôle technique
+  if (files?.technicalControlFile?.[0]) {
+    const upload = await this.cloudinaryService.uploadFile(files.technicalControlFile[0]);
+    updateData.technicalControlFile = upload.secure_url;
+  }
+
+  // Mise à jour du document
+  return this.vehicleModel.findOneAndUpdate(
+    { _id: id, company: companyId },
+    { ...updateData, updatedAt: new Date() },
+    { new: true, runValidators: true },
+  );
+}
 
   // Supprimer un véhicule
   async deleteVehicle(id: string, companyId: string): Promise<{ deleted: boolean }> {
