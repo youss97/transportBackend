@@ -85,8 +85,8 @@ async getTodayChargementDechargement(@CurrentUser() user: any) {
   async findAllByCompanyId(@CurrentCompany() companyId: any) {
     return this.chargementDechargementService.findAllByCompanyId(companyId);
   }
-  @Get()
-  @ApiOperation({ summary: 'Récupérer les chargements/déchargements' })
+  @Get('me')
+  @ApiOperation({ summary: 'Récupérer mes chargements/déchargements' })
   async findAll(@CurrentUser() user: any) {
     return this.chargementDechargementService.findAllByUserId(user.userId);
   }

@@ -86,7 +86,7 @@ export class PointageController {
     return pointage; // Renvoie le pointage si trouvé
   }
 
-  @Get()
+  @Get('me')
   @ApiOperation({ summary: 'mes pointages' })
   async findAllByCurrentUser(@CurrentUser() user: any) {
     const driver = user.userId;
@@ -97,6 +97,7 @@ export class PointageController {
   async findAll() {
     return this.pointageService.findAll();
   }
+
   @Get('by-company')
   @ApiOperation({ summary: "les pointages des utilisateurs d'une societe" })
   async findAllByCompanyId(@CurrentCompany() companyId: any) {
