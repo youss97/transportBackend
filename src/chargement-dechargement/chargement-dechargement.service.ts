@@ -83,6 +83,7 @@ export class ChargementDechargementService {
       .findOneAndUpdate(
         { _id: new Types.ObjectId(id), driver: new Types.ObjectId(userId) },
         updateDto,
+        { new: true }
       )
       .exec();
 
