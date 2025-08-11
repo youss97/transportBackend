@@ -79,6 +79,7 @@ export class VehiclesController {
     @Query('limit') limit = 10,
     @Query('search') search = '',
   ) {
+    console.log('Company ID:', companyId);
     return this.vehiclesService.findAll(companyId, page, limit, search);
   }
 

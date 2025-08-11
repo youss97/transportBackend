@@ -4,7 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Vehicle } from 'src/schemas/vehicle.schema';
 import { VehicleStatus } from 'src/enums/vehicle-status.enum';
 import { CreateVehicleDto } from 'src/schemas/create-vehicle.dto';
@@ -88,12 +88,45 @@ async create(
     const [data, total] = await Promise.all([
       this.vehicleModel
         .find(query)
-        .populate('currentDriver', 'firstName lastName')
         .skip(skip)
         .limit(limit)
         .exec(),
       this.vehicleModel.countDocuments(query),
     ]);
+  data.forEach(vehicle => {
+    if (!vehicle.currentDriver ) {
+      vehicle.currentDriver = null;
+    } else if (typeof vehicle.currentDriver === 'string' && Types.ObjectId.isValid(vehicle.currentDriver)) {
+      vehicle.currentDriver = new Types.ObjectId(vehicle.currentDriver);
+    } else if (!Types.ObjectId.isValid(vehicle.currentDriver)) {
+      vehicle.currentDriver = null;
+    }
+  });
+  const toPopulate = [];
+
+   data.forEach(vehicle => {
+    const driver = vehicle.currentDriver;
+    if (typeof driver === 'string') {
+      if (Types.ObjectId.isValid(driver)) {
+        // Convertir string valide en ObjectId
+        vehicle.currentDriver = new Types.ObjectId(driver);
+        toPopulate.push(vehicle);
+      } else {
+        // Invalide => on garde comme ça (pas de populate)
+        vehicle.currentDriver = new Types.ObjectId(driver); 
+      }
+    } else if (driver instanceof Types.ObjectId) {
+      // Déjà ObjectId
+      toPopulate.push(vehicle);
+    } else {
+      // null, undefined ou autre => pas de populate
+      vehicle.currentDriver = driver;
+    }
+  });
+
+  // Populate uniquement sur les vehicles avec currentDriver ObjectId
+  await this.vehicleModel.populate(toPopulate, { path: 'currentDriver' });
+
 
     return {
       data,
@@ -103,17 +136,32 @@ async create(
     };
   }
 
-  async findOne(id: string): Promise<Vehicle> {
-    const vehicle = await this.vehicleModel
-      .findById(id)
-      .populate('currentDriver', 'firstName lastName')
-      .exec();
+async findOne(id: string): Promise<Vehicle> {
+  const vehicle = await this.vehicleModel.findById(id).exec();
 
-    if (!vehicle) {
-      throw new NotFoundException('Véhicule non trouvé');
-    }
-    return vehicle;
+  if (!vehicle) {
+    throw new NotFoundException('Véhicule non trouvé');
   }
+
+  // Gestion currentDriver avant populate
+  if (vehicle.currentDriver) {
+    if (typeof vehicle.currentDriver === 'string' && Types.ObjectId.isValid(vehicle.currentDriver)) {
+      vehicle.currentDriver = new Types.ObjectId(vehicle.currentDriver);
+    } else if (!Types.ObjectId.isValid(vehicle.currentDriver)) {
+      vehicle.currentDriver = null;
+    }
+  } else {
+    vehicle.currentDriver = null;
+  }
+
+  // Populate si currentDriver est un ObjectId valide
+  if (vehicle.currentDriver instanceof Types.ObjectId) {
+    await vehicle.populate('currentDriver');
+  }
+
+  return vehicle;
+}
+
 
   async assignDriver(
     vehicleId: string,
@@ -225,17 +273,32 @@ async updateVehicle(
       })
       .exec();
   }
-   async findOneByDriver(driverId: string): Promise<Vehicle> {
-    const vehicle = await this.vehicleModel
-      .findOne({ currentDriver: driverId })
-      .populate('currentDriver', 'firstName lastName') // Optionnel : peupler le champ 'currentDriver'
-      .exec();
+async findOneByDriver(driverId: string): Promise<Vehicle> {
+  // On essaye d'abord de valider driverId
 
-    if (!vehicle) {
-      throw new NotFoundException('Aucun véhicule trouvé pour ce chauffeur');
-    }
+  const vehicle = await this.vehicleModel.findOne({ currentDriver: driverId }).exec();
 
-    return vehicle;
+  if (!vehicle) {
+    throw new NotFoundException('Aucun véhicule trouvé pour ce chauffeur');
   }
+
+  // Pareil, on contrôle currentDriver avant populate
+  if (vehicle.currentDriver) {
+    if (typeof vehicle.currentDriver === 'string' && Types.ObjectId.isValid(vehicle.currentDriver)) {
+      vehicle.currentDriver = new Types.ObjectId(vehicle.currentDriver);
+    } else if (!Types.ObjectId.isValid(vehicle.currentDriver)) {
+      vehicle.currentDriver = null;
+    }
+  } else {
+    vehicle.currentDriver = null;
+  }
+
+  if (vehicle.currentDriver instanceof Types.ObjectId) {
+    await vehicle.populate('currentDriver');
+  }
+
+  return vehicle;
+}
+
 
 }
