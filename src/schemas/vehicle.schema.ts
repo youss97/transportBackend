@@ -6,8 +6,9 @@ export class Vehicle extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true })
   company: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
-  currentDriver?: Types.ObjectId; // Optionnel
+@Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
+currentDrivers: Types.ObjectId[]; // Plusieurs conducteurs
+
 
   @Prop()
   licensePlate: string;

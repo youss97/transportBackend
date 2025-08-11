@@ -4,6 +4,9 @@ import {
   IsNumber,
   IsDateString,
   IsMongoId,
+  ArrayNotEmpty,
+  ArrayUnique,
+  IsArray,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
@@ -51,9 +54,38 @@ export class CreateVehicleDto {
   @IsString()
   fuelType?: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  currentDriver?: string; // Si c'est un ID Mongo valide
+  @ApiProperty({
+  required: false,
+  type: [String],
+  description: 'Liste des conducteurs (IDs)',
+  example: ['64d9f4e9a7e123456789abcd'],
+})
+@IsOptional()
+@IsArray()
+@ArrayUnique()
+@IsMongoId({ each: true })
+@Transform(({ value }) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    // Si string avec virgule, on split en tableau
+    if (value.includes(',')) {
+      return value.split(',').map(v => v.trim());
+    }
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed;
+      return [value];
+    } catch {
+      return [value];
+    }
+  }
+  return value;
+})
+
+
+currentDrivers?: string[];
+
 
   @ApiProperty({ required: false })
   @IsOptional()
