@@ -16,5 +16,6 @@ export enum DocumentType {
   MEDICAL_VISIT = 'medical_visit',
   SELFIE = 'selfie',
   PERMIS_RECTO = 'permis_recto',
-  PERMIS_VERSO = 'permis_verso'
+  PERMIS_VERSO = 'permis_verso',
+  PAYSLIP = 'fiche_de_paie'
 }
