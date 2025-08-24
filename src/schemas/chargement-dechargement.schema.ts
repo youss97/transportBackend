@@ -30,7 +30,12 @@ export class ChargmentDechargement {
   photo: string;
 
   @Prop({ type: String })
-  balancePhoto: string;  // Nouveau champ pour la photo de balance
+  balancePhoto: string; // Nouveau champ pour la photo de balance
+  // ✅ Nouveau champ
+  @Prop({ type: Number, required: true })
+  tonnage: number;
 }
 
-export const ChargmentDechargementSchemas = SchemaFactory.createForClass(ChargmentDechargement);
+export const ChargmentDechargementSchemas = SchemaFactory.createForClass(
+  ChargmentDechargement,
+);

@@ -1,6 +1,16 @@
 // src/tyre-change/dto/create-tyre-change.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsDateString, IsEnum, IsMongoId, IsNumber, IsOptional, IsString, ArrayMinSize } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ArrayMinSize,
+} from 'class-validator';
 
 export class CreateTyreChangeDto {
   @ApiProperty()
@@ -16,20 +26,37 @@ export class CreateTyreChangeDto {
   dateChange: string;
 
   @ApiProperty()
+  @ApiProperty()
+  @Type(() => Number) 
   @IsNumber()
   kilometrage: number;
 
   @ApiProperty({
-    type: [String],
-    enum: ['avant_gauche', 'avant_droit', 'arriere_gauche', 'arriere_droit']
+    enum: ['avant_gauche', 'avant_droit', 'arriere_gauche', 'arriere_droit'],
+    description: 'Position du pneu changé',
+    example: 'avant_gauche',
   })
-  @IsArray()
-  @ArrayMinSize(1)
-  @IsEnum(['avant_gauche', 'avant_droit', 'arriere_gauche', 'arriere_droit'], { each: true })
-  positions: string[];
+  @IsEnum(['avant_gauche', 'avant_droit', 'arriere_gauche', 'arriere_droit'])
+  position: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   note?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  serialRemoved?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  serialAdded?: string;
+
+  @ApiProperty({ type: 'string', format: 'binary', required: false })
+  photoRemoved?: any;
+
+  @ApiProperty({ type: 'string', format: 'binary', required: false })
+  photoAdded?: any;
 }

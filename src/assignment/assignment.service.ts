@@ -29,7 +29,7 @@ export class AssignmentService {
         if (!isValidObjectId(driverId)) {
           throw new BadRequestException(`ID chauffeur invalide : ${driverId}`);
         }
-        const driver = await this.userModel.findById(driverId) as User;
+        const driver = (await this.userModel.findById(driverId)) as User;
         if (!driver || driver.role !== UserRole.DRIVER) {
           throw new BadRequestException(`Chauffeur non valide : ${driverId}`);
         }
@@ -46,9 +46,7 @@ export class AssignmentService {
         }
         const supervisor = await this.userModel.findById(supId);
         if (!supervisor || supervisor.role !== UserRole.SUPERVISOR) {
-          throw new BadRequestException(
-            `Superviseur non valide : ${supId}`,
-          );
+          throw new BadRequestException(`Superviseur non valide : ${supId}`);
         }
         validSupervisors.push(supervisor._id as Types.ObjectId);
       }
@@ -102,7 +100,7 @@ export class AssignmentService {
     const uniqueDriversMap = new Map();
     for (const assign of assignments) {
       const drivers = assign.drivers as any[];
-      drivers.forEach(driver => {
+      drivers.forEach((driver) => {
         if (!uniqueDriversMap.has(driver._id.toString())) {
           uniqueDriversMap.set(driver._id.toString(), driver);
         }
@@ -141,9 +139,7 @@ export class AssignmentService {
       const validSupervisors: Types.ObjectId[] = [];
       for (const supId of dto.supervisors) {
         if (!isValidObjectId(supId)) {
-          throw new BadRequestException(
-            `ID superviseur invalide : ${supId}`,
-          );
+          throw new BadRequestException(`ID superviseur invalide : ${supId}`);
         }
         const supervisor = await this.userModel.findById(supId);
         if (!supervisor || supervisor.role !== UserRole.SUPERVISOR) {
@@ -198,5 +194,37 @@ export class AssignmentService {
         _id: { $nin: assignedSupervisors },
       })
       .select('firstName lastName email');
+  }
+
+  // src/assignment/assignment.service.ts
+  async getCountsBySite(companyId: Types.ObjectId) {
+    return this.assignmentModel.aggregate([
+      { $match: { company: companyId } }, // Filtre par société
+      {
+        $group: {
+          _id: '$site',
+          driversCount: { $sum: { $size: '$drivers' } }, // Compter le nombre de chauffeurs
+          supervisorsCount: { $sum: { $size: '$supervisors' } }, // Compter le nombre de superviseurs
+        },
+      },
+      {
+        $lookup: {
+          from: 'sites', // Collection Site
+          localField: '_id',
+          foreignField: '_id',
+          as: 'site',
+        },
+      },
+      { $unwind: '$site' },
+      {
+        $project: {
+          _id: 0,
+          siteId: '$site._id',
+          siteName: '$site.nom_site',
+          driversCount: 1,
+          supervisorsCount: 1,
+        },
+      },
+    ]);
   }
 }

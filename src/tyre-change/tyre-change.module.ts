@@ -6,6 +6,7 @@ import { TyreChangeService } from './tyre-change.service';
 import { TyreChange, TyreChangeSchema } from 'src/schemas/tyre-change.schemas';
 import { Vehicle, VehicleSchema } from 'src/schemas/vehicle.schema';
 import { User, UserSchema } from 'src/schemas/user.schema';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Module({
   imports: [MongooseModule.forFeature([{ name: TyreChange.name, schema: TyreChangeSchema },
@@ -13,6 +14,6 @@ import { User, UserSchema } from 'src/schemas/user.schema';
       { name: Vehicle.name, schema: VehicleSchema },
   ])],
   controllers: [TyreChangeController],
-  providers: [TyreChangeService],
+  providers: [TyreChangeService,CloudinaryService],
 })
 export class TyreChangeModule {}

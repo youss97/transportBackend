@@ -14,11 +14,14 @@ import { Pointage, PointageDocument } from 'src/schemas/pointage.schema';
 import { CreatePointageDto } from 'src/schemas/create-pointage.dto';
 import { UpdatePointageDto } from 'src/schemas/update-pointage.dto';
 import * as moment from 'moment';
+import { CompanySettings } from 'src/schemas/company-settings.schema';
 
 @Injectable()
 export class PointageService {
   constructor(
     @InjectModel(Pointage.name) private pointageModel: Model<PointageDocument>,
+    @InjectModel(CompanySettings.name)
+    private companySettingsModel: Model<CompanySettings>,
   ) {}
 
   async create(
@@ -77,31 +80,31 @@ export class PointageService {
     return pointage;
   }
 
- async update(
-  id: string,
-  updatePointageDto: UpdatePointageDto,
-  userId: string,
-): Promise<Pointage> {
-  // On supprime tous les champs undefined pour éviter d'écraser les valeurs existantes
-  const cleanDto = Object.fromEntries(
-    Object.entries(updatePointageDto).filter(([_, v]) => v !== undefined)
-  );
+  async update(
+    id: string,
+    updatePointageDto: UpdatePointageDto,
+    userId: string,
+  ): Promise<Pointage> {
+    // On supprime tous les champs undefined pour éviter d'écraser les valeurs existantes
+    const cleanDto = Object.fromEntries(
+      Object.entries(updatePointageDto).filter(([_, v]) => v !== undefined),
+    );
 
-  const updatedPointage = await this.pointageModel.findOneAndUpdate(
-    {
-      _id: new Types.ObjectId(id),
-      driver: new Types.ObjectId(userId),
-    },
-    { $set: cleanDto }, // On ne met à jour que les champs envoyés
-    { new: true } // Retourne le document après update
-  );
+    const updatedPointage = await this.pointageModel.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(id),
+        driver: new Types.ObjectId(userId),
+      },
+      { $set: cleanDto }, // On ne met à jour que les champs envoyés
+      { new: true }, // Retourne le document après update
+    );
 
-  if (!updatedPointage) {
-    throw new NotFoundException('Pointage not found');
+    if (!updatedPointage) {
+      throw new NotFoundException('Pointage not found');
+    }
+
+    return updatedPointage;
   }
-
-  return updatedPointage;
-}
 
   async uploadPhoto(
     file: Express.Multer.File,
@@ -143,5 +146,95 @@ export class PointageService {
         createdAt: { $gte: todayStart, $lte: todayEnd },
       })
       .exec();
+  }
+  async getMonthlyReportByDriver(
+    userId: string,
+    companyId: string,
+    year: number,
+    month: number,
+  ) {
+    // Récupérer les paramètres de la société
+    const companySettings = await this.companySettingsModel
+      .findOne({ companyId })
+      .exec();
+    if (!companySettings) {
+      throw new NotFoundException('Paramètres de la société introuvables');
+    }
+
+    const { workStartHour, workEndHour, totalBreakHours } = companySettings;
+
+    const monthStart = moment
+      .utc({ year, month: month - 1, day: 1 })
+      .startOf('day')
+      .toDate();
+    const monthEnd = moment
+      .utc({ year, month: month - 1 })
+      .endOf('month')
+      .endOf('day')
+      .toDate();
+
+    const pointages = await this.pointageModel
+      .find({
+        driver: new Types.ObjectId(userId),
+        createdAt: { $gte: monthStart, $lte: monthEnd },
+      })
+      .sort({ createdAt: 1 })
+      .exec();
+
+    const daysInMonth = moment(monthStart).daysInMonth();
+    const report = [];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = moment
+        .utc({ year, month: month - 1, day })
+        .startOf('day');
+      const pointage = pointages.find((p) =>
+        moment(p.createdAt).utc().isSame(currentDate, 'day'),
+      );
+
+      if (pointage) {
+        const isLate =
+          pointage.pointageDebut &&
+          moment(pointage.pointageDebut).isAfter(
+            moment(currentDate).set({
+              hour: parseInt(workStartHour.split(':')[0], 10),
+              minute: parseInt(workStartHour.split(':')[1], 10),
+            }),
+          );
+
+        const isAbsent = !pointage.pointageDebut; // pas de début = absence
+
+        report.push({
+          date: currentDate.format('YYYY-MM-DD'),
+          heureDebut: pointage.pointageDebut
+            ? moment(pointage.pointageDebut).format('HH:mm')
+            : null,
+          heureFin: pointage.pointageFin
+            ? moment(pointage.pointageFin).format('HH:mm')
+            : null,
+          absence: isAbsent,
+          retard: !isAbsent && isLate,
+          tempsTravail:
+            pointage.pointageDebut && pointage.pointageFin
+              ? moment(pointage.pointageFin).diff(
+                  moment(pointage.pointageDebut),
+                  'hours',
+                  true,
+                ) - (totalBreakHours || 0)
+              : 0,
+        });
+      } else {
+        report.push({
+          date: currentDate.format('YYYY-MM-DD'),
+          heureDebut: null,
+          heureFin: null,
+          absence: true,
+          retard: false,
+          tempsTravail: 0,
+        });
+      }
+    }
+
+    return report;
   }
 }

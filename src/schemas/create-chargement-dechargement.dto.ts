@@ -47,5 +47,10 @@ export class CreateChargementDechargementDto {
   @IsOptional()
   @IsString()
   @emptyToUndefined()
-  balancePhoto?: string;  // Nouveau champ pour la photo de balance
+  balancePhoto?: string; // Nouveau champ pour la photo de balance
+  @ApiProperty({
+    example: 12.5,
+    description: 'Nombre de tonnes chargées/déchargées',
+  })
+  tonnage: number;
 }

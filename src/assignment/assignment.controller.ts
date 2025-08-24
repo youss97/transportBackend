@@ -83,5 +83,11 @@ create(
     return this.assignmentService.remove(id);
   }
 
+// src/assignment/assignment.controller.ts
+@Get('stats/by-site')
+@ApiOperation({ summary: 'Obtenir le nombre de chauffeurs et superviseurs par site' })
+getCountsBySite(@CurrentCompany() companyId: any) {
+  return this.assignmentService.getCountsBySite(companyId);
+}
 
 }

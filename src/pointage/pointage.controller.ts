@@ -156,4 +156,16 @@ async update(
     await this.pointageService.remove(id);
     return { message: 'Pointage supprimé avec succès' };
   }
+
+  @Get('report/:year/:month')
+@ApiOperation({ summary: "Rapport mensuel du chauffeur (prise en compte des réglages société)" })
+async getMonthlyReport(
+  @CurrentUser() user: any,
+  @CurrentCompany() companyId: string,
+  @Param('year') year: number,
+  @Param('month') month: number,
+) {
+  return this.pointageService.getMonthlyReportByDriver(user.userId, companyId, +year, +month);
+}
+
 }
