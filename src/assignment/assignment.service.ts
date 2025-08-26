@@ -197,34 +197,49 @@ export class AssignmentService {
   }
 
   // src/assignment/assignment.service.ts
-  async getCountsBySite(companyId: Types.ObjectId) {
-    return this.assignmentModel.aggregate([
-      { $match: { company: companyId } }, // Filtre par société
-      {
-        $group: {
-          _id: '$site',
-          driversCount: { $sum: { $size: '$drivers' } }, // Compter le nombre de chauffeurs
-          supervisorsCount: { $sum: { $size: '$supervisors' } }, // Compter le nombre de superviseurs
-        },
-      },
-      {
-        $lookup: {
-          from: 'sites', // Collection Site
-          localField: '_id',
-          foreignField: '_id',
-          as: 'site',
-        },
-      },
-      { $unwind: '$site' },
-      {
-        $project: {
-          _id: 0,
-          siteId: '$site._id',
-          siteName: '$site.nom_site',
-          driversCount: 1,
-          supervisorsCount: 1,
-        },
-      },
-    ]);
+async getCountsBySite(companyId: Types.ObjectId, siteId?: string) {
+  const match: any = { company: companyId };
+
+  if (siteId && isValidObjectId(siteId)) {
+    match.site = new Types.ObjectId(siteId);
   }
+
+  return this.assignmentModel.aggregate([
+    { $match: match },
+    {
+      $project: {
+        site: 1,
+        driversCount: { $size: { $ifNull: ['$drivers', []] } },
+        supervisorsCount: { $size: { $ifNull: ['$supervisors', []] } },
+      },
+    },
+    {
+      $group: {
+        _id: '$site',
+        driversCount: { $sum: '$driversCount' },
+        supervisorsCount: { $sum: '$supervisorsCount' },
+      },
+    },
+    {
+      $lookup: {
+        from: 'sites',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'site',
+      },
+    },
+    { $unwind: '$site' },
+    {
+      $project: {
+        _id: 0,
+        siteId: '$site._id',
+        siteName: '$site.nom_site',
+        driversCount: 1,
+        supervisorsCount: 1,
+      },
+    },
+  ]);
+}
+
+
 }

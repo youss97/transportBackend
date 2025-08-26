@@ -40,11 +40,16 @@ create(
   findAll(@CurrentCompany() companyId: any) {
     return this.assignmentService.findAll(companyId);
   }
-@Get('stats/by-site')
-@ApiOperation({ summary: 'Obtenir le nombre de chauffeurs et superviseurs par site' })
-getCountsBySite(@CurrentCompany() companyId: any) {
-  return this.assignmentService.getCountsBySite(companyId);
+@Get('stats/by-site/:siteId')
+@ApiOperation({ summary: 'Obtenir le nombre de chauffeurs et superviseurs pour un site précis' })
+@ApiParam({ name: 'siteId', description: 'ID du site' })
+getCountsBySite(
+  @CurrentCompany() companyId: any,
+  @Param('siteId') siteId: string,
+) {
+  return this.assignmentService.getCountsBySite(companyId, siteId);
 }
+
   @Get('my-drivers')
   @ApiOperation({
     summary: 'Lister les chauffeurs affectés au superviseur connecté',
