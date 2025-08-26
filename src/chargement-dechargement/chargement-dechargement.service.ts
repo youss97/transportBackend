@@ -292,11 +292,11 @@ async getMonthlyStatsByCompanyByDriverByMonth(companyId: string, year: number, m
 }
 
 
-async getRevenueByMonth(companyId: string, year: number, month: number) {
+async getRevenueByMonth(companyId: string, year: number, month: number, siteId?: string) {
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59);
 
-  return this.chargementDechargementModel.aggregate([
+  const pipeline: any[] = [
     {
       $match: {
         company: new Types.ObjectId(companyId),
@@ -312,37 +312,43 @@ async getRevenueByMonth(companyId: string, year: number, month: number) {
       },
     },
     { $unwind: '$sites' },
+  ];
+
+  // Si siteId fourni → on filtre
+  if (siteId) {
+    pipeline.push({
+      $match: { 'sites._id': new Types.ObjectId(siteId) },
+    });
+  }
+
+  pipeline.push(
     {
       $addFields: {
         chiffreAffaire: { $multiply: ['$tonnage', '$sites.prix_tonne'] },
         siteName: '$sites.nom_site',
+        siteId: '$sites._id',
       },
     },
     {
       $group: {
-        _id: '$siteName',
+        _id: '$siteId',
+        siteName: { $first: '$siteName' },
         totalChiffreAffaire: { $sum: '$chiffreAffaire' },
         totalTonnage: { $sum: '$tonnage' },
         totalOperations: { $sum: 1 },
       },
     },
-    {
-      $project: {
-        site: '$_id',
-        totalChiffreAffaire: 1,
-        totalTonnage: 1,
-        totalOperations: 1,
-        _id: 0,
-      },
-    },
-  ]);
+    { $project: { _id: 0, siteId: '$_id', siteName: 1, totalChiffreAffaire: 1, totalTonnage: 1, totalOperations: 1 } }
+  );
+
+  return this.chargementDechargementModel.aggregate(pipeline);
 }
 
-async getProductionByMonth(companyId: string, year: number, month: number) {
+async getProductionByMonth(companyId: string, year: number, month: number, siteId?: string) {
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59);
 
-  return this.chargementDechargementModel.aggregate([
+  const pipeline: any[] = [
     {
       $match: {
         company: new Types.ObjectId(companyId),
@@ -358,22 +364,28 @@ async getProductionByMonth(companyId: string, year: number, month: number) {
       },
     },
     { $unwind: '$sites' },
+  ];
+
+  if (siteId) {
+    pipeline.push({
+      $match: { 'sites._id': new Types.ObjectId(siteId) },
+    });
+  }
+
+  pipeline.push(
     {
       $group: {
-        _id: '$sites.nom_site',
+        _id: '$sites._id',
+        siteName: { $first: '$sites.nom_site' },
         totalTonnage: { $sum: '$tonnage' },
         totalOperations: { $sum: 1 },
       },
     },
-    {
-      $project: {
-        site: '$_id',
-        totalTonnage: 1,
-        totalOperations: 1,
-        _id: 0,
-      },
-    },
-  ]);
+    { $project: { _id: 0, siteId: '$_id', siteName: 1, totalTonnage: 1, totalOperations: 1 } }
+  );
+
+  return this.chargementDechargementModel.aggregate(pipeline);
 }
+
 
 }

@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
+  Query
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ChargementDechargementService } from './chargement-dechargement.service';
@@ -20,13 +21,14 @@ import {
   ApiConsumes,
   ApiBearerAuth,
   ApiTags,
+  ApiQuery,
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { UpdateChargementDechargementDto } from 'src/schemas/update-chargement-dechargement.dto';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
-import { Query, Types } from 'mongoose';
+import {  Types } from 'mongoose';
 import { CurrentCompany } from 'src/decorators/company.decorator';
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from 'src/enums/user-role.enum';
@@ -219,31 +221,38 @@ export class ChargementDechargementController {
       Number(month),
     );
   }
-  @Get('report/revenue/:year/:month')
-  @ApiOperation({ summary: 'Chiffre d’affaires par site pour le mois' })
-  async getRevenue(
-    @CurrentCompany() companyId: string,
-    @Param('year') year: number,
-    @Param('month') month: number,
-  ) {
-    return this.chargementDechargementService.getRevenueByMonth(
-      companyId,
-      Number(year),
-      Number(month),
-    );
-  }
+ @Get('report/revenue/:year/:month')
+@ApiOperation({ summary: 'Chiffre d’affaires par site pour le mois (optionnel: siteId)' })
+@ApiQuery({ name: 'siteId', required: false, type: String })
+async getRevenue(
+  @CurrentCompany() companyId: string,
+  @Param('year') year: number,
+  @Param('month') month: number,
+  @Query('siteId') siteId?: string,
+) {
+  return this.chargementDechargementService.getRevenueByMonth(
+    companyId,
+    Number(year),
+    Number(month),
+    siteId,
+  );
+}
 
-  @Get('report/production/:year/:month')
-  @ApiOperation({ summary: 'Production de tonnes par site pour le mois' })
-  async getProduction(
-    @CurrentCompany() companyId: string,
-    @Param('year') year: number,
-    @Param('month') month: number,
-  ) {
-    return this.chargementDechargementService.getProductionByMonth(
-      companyId,
-      Number(year),
-      Number(month),
-    );
-  }
+@Get('report/production/:year/:month')
+@ApiOperation({ summary: 'Production de tonnes par site pour le mois (optionnel: siteId)' })
+@ApiQuery({ name: 'siteId', required: false, type: String })
+async getProduction(
+  @CurrentCompany() companyId: string,
+  @Param('year') year: number,
+  @Param('month') month: number,
+  @Query('siteId') siteId?: string,
+) {
+  return this.chargementDechargementService.getProductionByMonth(
+    companyId,
+    Number(year),
+    Number(month),
+    siteId,
+  );
+}
+
 }
