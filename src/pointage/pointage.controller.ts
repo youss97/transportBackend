@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { PointageService } from './pointage.service';
@@ -158,14 +159,21 @@ async update(
   }
 
   @Get('report/:year/:month')
-@ApiOperation({ summary: "Rapport mensuel du chauffeur (prise en compte des réglages société)" })
+@ApiOperation({ summary: "Rapport mensuel du chauffeur (prise en compte des réglages société et éventuellement du site)" })
 async getMonthlyReport(
   @CurrentUser() user: any,
   @CurrentCompany() companyId: string,
   @Param('year') year: number,
   @Param('month') month: number,
+  @Query('siteId') siteId?: string, // ✅ Param optionnel
 ) {
-  return this.pointageService.getMonthlyReportByDriver(user.userId, companyId, +year, +month);
+  return this.pointageService.getMonthlyReportByDriver(
+    user.userId,
+    companyId,
+    +year,
+    +month,
+    siteId, // ✅ transmis au service
+  );
 }
 
 }

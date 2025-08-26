@@ -387,5 +387,95 @@ async getProductionByMonth(companyId: string, year: number, month: number, siteI
   return this.chargementDechargementModel.aggregate(pipeline);
 }
 
+async getRankingBySiteAndMonth(
+  companyId: string,
+  year: number,
+  month: number,
+  siteId?: string,
+) {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0, 23, 59, 59);
+
+  const pipeline: any[] = [
+    {
+      $match: {
+        company: new Types.ObjectId(companyId),
+        createdAt: { $gte: startDate, $lte: endDate },
+      },
+    },
+    // Associer le site
+    {
+      $lookup: {
+        from: 'sites',
+        localField: 'company',
+        foreignField: 'company',
+        as: 'siteInfo',
+      },
+    },
+    { $unwind: '$siteInfo' },
+  ];
+
+  // Si un siteId est passé → on filtre
+  if (siteId) {
+    pipeline.push({
+      $match: { 'siteInfo._id': new Types.ObjectId(siteId) },
+    });
+  }
+
+  pipeline.push(
+    // Calcul du chiffre d’affaires
+    {
+      $addFields: {
+        chiffreAffaire: { $multiply: ['$tonnage', '$siteInfo.prix_tonne'] },
+        jour: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+      },
+    },
+    // Groupement par chauffeur
+    {
+      $group: {
+        _id: '$driver',
+        totalTonnage: { $sum: '$tonnage' },
+        totalOperations: { $sum: 1 },
+        totalChiffreAffaire: { $sum: '$chiffreAffaire' },
+        joursTravail: { $addToSet: '$jour' },
+      },
+    },
+    {
+      $addFields: {
+        nombreJoursTravail: { $size: '$joursTravail' },
+        // 👉 absences basées sur 22 jours ouvrés (à adapter si besoin)
+        nombreAbsences: { $subtract: [22, { $size: '$joursTravail' }] },
+      },
+    },
+    // Ajouter infos chauffeur
+    {
+      $lookup: {
+        from: 'users',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'driverInfo',
+      },
+    },
+    { $unwind: '$driverInfo' },
+    {
+      $project: {
+        _id: 0,
+        driverId: '$driverInfo._id',
+        nom: '$driverInfo.lastName',
+        prenom: '$driverInfo.firstName',
+        totalTonnage: 1,
+        totalOperations: 1,
+        totalChiffreAffaire: 1,
+        nombreJoursTravail: 1,
+        nombreAbsences: 1,
+      },
+    },
+    { $sort: { totalChiffreAffaire: -1 } } // Classement par CA décroissant
+  );
+
+  return this.chargementDechargementModel.aggregate(pipeline);
+}
+
+
 
 }

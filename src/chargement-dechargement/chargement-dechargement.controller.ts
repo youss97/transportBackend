@@ -255,4 +255,21 @@ async getProduction(
   );
 }
 
+@Get('ranking/:year/:month')
+@ApiOperation({ summary: 'Classement des chauffeurs par site et par mois' })
+@ApiQuery({ name: 'siteId', required: false, type: String })
+async getRanking(
+  @CurrentCompany() companyId: string,
+  @Param('year') year: number,
+  @Param('month') month: number,
+  @Query('siteId') siteId?: string,
+) {
+  return this.chargementDechargementService.getRankingBySiteAndMonth(
+    companyId,
+    Number(year),
+    Number(month),
+    siteId,
+  );
+}
+
 }
