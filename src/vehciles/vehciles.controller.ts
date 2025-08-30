@@ -45,7 +45,7 @@ export class AssignDriversDto {
 @ApiTags('vehicles')
 @ApiBearerAuth()
 @Controller('vehicles')
-@UseGuards(JwtAuthGuard, RolesGuard)
+//@UseGuards(JwtAuthGuard, RolesGuard)
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
