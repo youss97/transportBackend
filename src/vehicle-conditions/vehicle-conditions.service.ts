@@ -52,11 +52,14 @@ export class VehicleConditionsService {
   async getLatestConditionForCurrentUser(
     currentUser: any,
   ): Promise<VehicleCondition> {
+    console.log('Current User:', currentUser);
+
     const vehicle = await this.vehicleModel.findOne({
-      currentDrivers: { $in: [currentUser.userId] },
+      currentDrivers: { $in: [new Types.ObjectId(currentUser.userId)] },
     });
+
     if (!vehicle) {
-      throw new NotFoundException('No vehicle assigned to this driver.');
+      throw new NotFoundException('No vehicle assigned to this driverrr.');
     }
 
     const latestCondition = await this.conditionModel
@@ -69,7 +72,7 @@ export class VehicleConditionsService {
 
     if (!latestCondition) {
       throw new NotFoundException(
-        'No vehicle condition found for this driver and vehicle.',
+        'No vehicle condition found for this driver and vehiclee.',
       );
     }
 
