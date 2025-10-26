@@ -59,7 +59,7 @@ export class VehicleConditionsController {
   @Get('latest')
   @ApiOperation({
     summary:
-      'Get the latest vehicle condition for the current logged-in driver',
+      'Get the latest vehicle condition for the current logged-in driverrrr',
   })
   @ApiResponse({
     status: 200,
