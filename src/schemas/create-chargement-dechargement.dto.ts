@@ -59,6 +59,7 @@ export class CreateChargementDechargementDto {
   @Transform(({ value }) => parseFloat(value))
   @Type(() => Number)
   @IsNumber()
+  @IsOptional()
   @Min(0)
   tonnage: number;
 }
