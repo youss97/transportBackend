@@ -3,10 +3,10 @@ import {
   IsString,
   IsDateString,
   IsMongoId,
-  Min,
   IsNumber,
+  Min,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 function emptyToUndefined() {
@@ -50,11 +50,14 @@ export class CreateChargementDechargementDto {
   @emptyToUndefined()
   photo?: string;
 
-  @ApiProperty({
-    example: 12.5,
-    description: 'Nombre de tonnes chargées/déchargées',
-  })
+  @ApiProperty({ type: 'string', format: 'binary', required: false })
+  @IsOptional()
+  @IsString()
+  @emptyToUndefined()
+  balancePhoto?: string; // Nouveau champ pour la photo de balance
+
   @Transform(({ value }) => parseFloat(value))
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   tonnage: number;
