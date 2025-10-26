@@ -53,7 +53,7 @@ export class VehicleConditionsService {
     currentUser: any,
   ): Promise<VehicleCondition> {
     const vehicle = await this.vehicleModel.findOne({
-      currentDriver: currentUser.userId,
+      currentDrivers: { $in: [currentUser.userId] },
     });
     if (!vehicle) {
       throw new NotFoundException('No vehicle assigned to this driver.');
