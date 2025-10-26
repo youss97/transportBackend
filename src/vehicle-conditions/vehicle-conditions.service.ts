@@ -21,10 +21,10 @@ export class VehicleConditionsService {
   // Méthode pour créer une condition et initialiser son statut à 'pending'
   async createConditionFromDriver(currentUser: any, files: any) {
     const vehicle = await this.vehicleModel.findOne({
-      currentDriver: currentUser.userId,
+      currentDrivers: { $in: [new Types.ObjectId(currentUser.userId)] },
     });
     if (!vehicle) {
-      throw new NotFoundException('No vehicle assigned to this driver.');
+      throw new NotFoundException('No vehicle assigned to this driverrrr.');
     }
 
     const uploaded = {};
