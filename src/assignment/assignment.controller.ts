@@ -40,6 +40,8 @@ create(
   findAll(@CurrentCompany() companyId: any) {
     return this.assignmentService.findAll(companyId);
   }
+
+  //one
 @Get('stats/by-site/:siteId')
 @ApiOperation({ summary: 'Obtenir le nombre de chauffeurs et superviseurs pour un site précis' })
 @ApiParam({ name: 'siteId', description: 'ID du site' })

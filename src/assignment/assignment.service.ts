@@ -197,49 +197,54 @@ export class AssignmentService {
   }
 
   // src/assignment/assignment.service.ts
-async getCountsBySite(companyId: Types.ObjectId, siteId?: string) {
-  const match: any = { company: companyId };
+  async getCountsBySite(companyId: Types.ObjectId, siteId?: string) {
+    const match: any = { company: companyId };
 
-  if (siteId && isValidObjectId(siteId)) {
-    match.site = new Types.ObjectId(siteId);
+    if (siteId && isValidObjectId(siteId)) {
+      match.site = new Types.ObjectId(siteId);
+    }
+
+    return this.assignmentModel.aggregate([
+      { $match: match },
+      {
+        $addFields: {
+          jour: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        },
+      },
+      {
+        $project: {
+          site: 1,
+          driversCount: { $size: { $ifNull: ['$drivers', []] } },
+          supervisorsCount: { $size: { $ifNull: ['$supervisors', []] } },
+          jour: 1,
+        },
+      },
+      {
+        $group: {
+          _id: { site: '$site', jour: '$jour' }, // on regroupe par site et jour
+          driversCount: { $sum: '$driversCount' },
+          supervisorsCount: { $sum: '$supervisorsCount' },
+        },
+      },
+      {
+        $lookup: {
+          from: 'sites',
+          localField: '_id.site',
+          foreignField: '_id',
+          as: 'site',
+        },
+      },
+      { $unwind: '$site' },
+      {
+        $project: {
+          _id: 0,
+          siteId: '$site._id',
+          siteName: '$site.nom_site',
+          jour: '$_id.jour',
+          driversCount: 1,
+          supervisorsCount: 1,
+        },
+      },
+    ]);
   }
-
-  return this.assignmentModel.aggregate([
-    { $match: match },
-    {
-      $project: {
-        site: 1,
-        driversCount: { $size: { $ifNull: ['$drivers', []] } },
-        supervisorsCount: { $size: { $ifNull: ['$supervisors', []] } },
-      },
-    },
-    {
-      $group: {
-        _id: '$site',
-        driversCount: { $sum: '$driversCount' },
-        supervisorsCount: { $sum: '$supervisorsCount' },
-      },
-    },
-    {
-      $lookup: {
-        from: 'sites',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'site',
-      },
-    },
-    { $unwind: '$site' },
-    {
-      $project: {
-        _id: 0,
-        siteId: '$site._id',
-        siteName: '$site.nom_site',
-        driversCount: 1,
-        supervisorsCount: 1,
-      },
-    },
-  ]);
-}
-
-
 }

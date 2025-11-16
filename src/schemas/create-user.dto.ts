@@ -31,6 +31,11 @@ export class CreateUserDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
+  cin?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
   address?: string;
 
   @ApiProperty({ required: false })

@@ -83,7 +83,7 @@ export class ChargementDechargementService {
       .findOneAndUpdate(
         { _id: new Types.ObjectId(id), driver: new Types.ObjectId(userId) },
         updateDto,
-        { new: true }
+        { new: true },
       )
       .exec();
 
@@ -145,337 +145,390 @@ export class ChargementDechargementService {
   }
 
   async getStatsByDriver(driverId: string) {
-  return this.chargementDechargementModel.aggregate([
-    { $match: { driver: new Types.ObjectId(driverId) } },
-    {
-      $group: {
-        _id: '$driver',
-        totalOperations: { $sum: 1 },
-        totalTonnage: { $sum: '$tonnage' },
-      },
-    },
-  ]);
-}
-async getStatsByCompany(companyId: string) {
-  return this.chargementDechargementModel.aggregate([
-    { $match: { company: new Types.ObjectId(companyId) } },
-    {
-      $group: {
-        _id: '$driver',
-        totalOperations: { $sum: 1 },
-        totalTonnage: { $sum: '$tonnage' },
-      },
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'driver',
-      },
-    },
-    { $unwind: '$driver' },
-  ]);
-}
-
-async getMonthlyStatsByCompany(
-  companyId: string,
-  year: number,
-  month: number,
-) {
-  return this.chargementDechargementModel.aggregate([
-    {
-      $match: {
-        company: new Types.ObjectId(companyId),
-        createdAt: {
-          $gte: new Date(year, month - 1, 1),
-          $lt: new Date(year, month, 1),
+    return this.chargementDechargementModel.aggregate([
+      { $match: { driver: new Types.ObjectId(driverId) } },
+      {
+        $group: {
+          _id: '$driver',
+          totalOperations: { $sum: 1 },
+          totalTonnage: { $sum: '$tonnage' },
         },
       },
-    },
-    {
-      $group: {
-        _id: '$driver',
-        totalOperations: { $sum: 1 },
-        totalTonnage: { $sum: '$tonnage' },
+    ]);
+  }
+  async getStatsByCompany(companyId: string) {
+    return this.chargementDechargementModel.aggregate([
+      { $match: { company: new Types.ObjectId(companyId) } },
+      {
+        $group: {
+          _id: '$driver',
+          totalOperations: { $sum: 1 },
+          totalTonnage: { $sum: '$tonnage' },
+        },
       },
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'driver',
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'driver',
+        },
       },
-    },
-    { $unwind: '$driver' },
-    {
-      $project: {
-        driver: 1,
-        totalOperations: 1,
-        totalTonnage: 1,
-      },
-    },
-    { $sort: { 'driver.name': 1 } },
-  ]);
-}
-async getMonthlyStatsByCompanyByDriverByMonth(companyId: string, year: number, month: number) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
-
-  return this.chargementDechargementModel.aggregate([
-    {
-      $match: {
-        company: new Types.ObjectId(companyId),
-        createdAt: { $gte: startDate, $lte: endDate },
-      },
-    },
-    // Récupérer le site correspondant au trajet du chargement
-    {
-      $lookup: {
-        from: 'sites',
-        let: { driverId: '$driver' },
-        pipeline: [
-          { $match: { $expr: { $eq: ['$company', new Types.ObjectId(companyId)] } } },
-          // Ici on pourrait filtrer par adresse_depart/arrivee si nécessaire
-        ],
-        as: 'siteInfo',
-      },
-    },
-    { $unwind: '$siteInfo' },
-    // Calculer le chiffre d’affaires en utilisant prix_tonne du site
-    {
-      $addFields: {
-        chiffreAffaire: { $multiply: ['$tonnage', '$siteInfo.prix_tonne'] },
-      },
-    },
-    // Grouper par chauffeur
-    {
-      $group: {
-        _id: '$driver',
-        totalChiffreAffaire: { $sum: '$chiffreAffaire' },
-        joursTravail: { $addToSet: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } } },
-        totalOperations: { $sum: 1 },
-        totalTonnage: { $sum: '$tonnage' },
-      },
-    },
-    {
-      $addFields: {
-        nombreJoursTravail: { $size: '$joursTravail' },
-        // Absences: si tu veux calculer dynamiquement, tu peux remplacer 22 par le nombre de jours ouvrés du mois
-        nombreAbsences: { $subtract: [22, { $size: '$joursTravail' }] },
-      },
-    },
-    // Récupérer les infos du chauffeur
-    {
-      $lookup: {
-        from: 'users',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'driverInfo',
-      },
-    },
-    { $unwind: '$driverInfo' },
-    {
-      $project: {
-        _id: 0,
-        driverId: '$driverInfo._id',
-        driverName: '$driverInfo.name',
-        totalChiffreAffaire: 1,
-        nombreJoursTravail: 1,
-        nombreAbsences: 1,
-        totalOperations: 1,
-        totalTonnage: 1,
-      },
-    },
-  ]);
-}
-
-
-async getRevenueByMonth(companyId: string, year: number, month: number, siteId?: string) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
-
-  const pipeline: any[] = [
-    {
-      $match: {
-        company: new Types.ObjectId(companyId),
-        createdAt: { $gte: startDate, $lte: endDate },
-      },
-    },
-    {
-      $lookup: {
-        from: 'sites',
-        localField: 'company',
-        foreignField: 'company',
-        as: 'sites',
-      },
-    },
-    { $unwind: '$sites' },
-  ];
-
-  // Si siteId fourni → on filtre
-  if (siteId) {
-    pipeline.push({
-      $match: { 'sites._id': new Types.ObjectId(siteId) },
-    });
+      { $unwind: '$driver' },
+    ]);
   }
 
-  pipeline.push(
-    {
-      $addFields: {
-        chiffreAffaire: { $multiply: ['$tonnage', '$sites.prix_tonne'] },
-        siteName: '$sites.nom_site',
-        siteId: '$sites._id',
+  async getMonthlyStatsByCompany(
+    companyId: string,
+    year: number,
+    month: number,
+  ) {
+    return this.chargementDechargementModel.aggregate([
+      {
+        $match: {
+          company: new Types.ObjectId(companyId),
+          createdAt: {
+            $gte: new Date(year, month - 1, 1),
+            $lt: new Date(year, month, 1),
+          },
+        },
       },
-    },
-    {
-      $group: {
-        _id: '$siteId',
-        siteName: { $first: '$siteName' },
-        totalChiffreAffaire: { $sum: '$chiffreAffaire' },
-        totalTonnage: { $sum: '$tonnage' },
-        totalOperations: { $sum: 1 },
+      {
+        $group: {
+          _id: '$driver',
+          totalOperations: { $sum: 1 },
+          totalTonnage: { $sum: '$tonnage' },
+        },
       },
-    },
-    { $project: { _id: 0, siteId: '$_id', siteName: 1, totalChiffreAffaire: 1, totalTonnage: 1, totalOperations: 1 } }
-  );
-
-  return this.chargementDechargementModel.aggregate(pipeline);
-}
-
-async getProductionByMonth(companyId: string, year: number, month: number, siteId?: string) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
-
-  const pipeline: any[] = [
-    {
-      $match: {
-        company: new Types.ObjectId(companyId),
-        createdAt: { $gte: startDate, $lte: endDate },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'driver',
+        },
       },
-    },
-    {
-      $lookup: {
-        from: 'sites',
-        localField: 'company',
-        foreignField: 'company',
-        as: 'sites',
+      { $unwind: '$driver' },
+      {
+        $project: {
+          driver: 1,
+          totalOperations: 1,
+          totalTonnage: 1,
+        },
       },
-    },
-    { $unwind: '$sites' },
-  ];
+      { $sort: { 'driver.name': 1 } },
+    ]);
+  }
+  async getMonthlyStatsByCompanyByDriverByMonth(
+    companyId: string,
+    year: number,
+    month: number,
+  ) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
 
-  if (siteId) {
-    pipeline.push({
-      $match: { 'sites._id': new Types.ObjectId(siteId) },
-    });
+    return this.chargementDechargementModel.aggregate([
+      {
+        $match: {
+          company: new Types.ObjectId(companyId),
+          createdAt: { $gte: startDate, $lte: endDate },
+        },
+      },
+      // Récupérer le site correspondant au trajet du chargement
+      {
+        $lookup: {
+          from: 'sites',
+          let: { driverId: '$driver' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$company', new Types.ObjectId(companyId)] },
+              },
+            },
+            // Ici on pourrait filtrer par adresse_depart/arrivee si nécessaire
+          ],
+          as: 'siteInfo',
+        },
+      },
+      { $unwind: '$siteInfo' },
+      // Calculer le chiffre d’affaires en utilisant prix_tonne du site
+      {
+        $addFields: {
+          chiffreAffaire: { $multiply: ['$tonnage', '$siteInfo.prix_tonne'] },
+        },
+      },
+      // Grouper par chauffeur
+      {
+        $group: {
+          _id: '$driver',
+          totalChiffreAffaire: { $sum: '$chiffreAffaire' },
+          joursTravail: {
+            $addToSet: {
+              $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+            },
+          },
+          totalOperations: { $sum: 1 },
+          totalTonnage: { $sum: '$tonnage' },
+        },
+      },
+      {
+        $addFields: {
+          nombreJoursTravail: { $size: '$joursTravail' },
+          // Absences: si tu veux calculer dynamiquement, tu peux remplacer 22 par le nombre de jours ouvrés du mois
+          nombreAbsences: { $subtract: [22, { $size: '$joursTravail' }] },
+        },
+      },
+      // Récupérer les infos du chauffeur
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'driverInfo',
+        },
+      },
+      { $unwind: '$driverInfo' },
+      {
+        $project: {
+          _id: 0,
+          driverId: '$driverInfo._id',
+          driverName: '$driverInfo.name',
+          totalChiffreAffaire: 1,
+          nombreJoursTravail: 1,
+          nombreAbsences: 1,
+          totalOperations: 1,
+          totalTonnage: 1,
+        },
+      },
+    ]);
   }
 
-  pipeline.push(
-    {
-      $group: {
-        _id: '$sites._id',
-        siteName: { $first: '$sites.nom_site' },
-        totalTonnage: { $sum: '$tonnage' },
-        totalOperations: { $sum: 1 },
+  async getRevenueByMonth(
+    companyId: string,
+    year: number,
+    month: number,
+    siteId?: string,
+    day?: string,
+  ) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    const match: any = {
+      company: new Types.ObjectId(companyId),
+      createdAt: { $gte: startDate, $lte: endDate },
+    };
+
+    if (day) {
+      const dayStart = new Date(day + 'T00:00:00');
+      const dayEnd = new Date(day + 'T23:59:59');
+      match.createdAt = { $gte: dayStart, $lte: dayEnd };
+    }
+
+    const pipeline: any[] = [
+      { $match: match },
+      {
+        $lookup: {
+          from: 'sites',
+          localField: 'company',
+          foreignField: 'company',
+          as: 'sites',
+        },
       },
-    },
-    { $project: { _id: 0, siteId: '$_id', siteName: 1, totalTonnage: 1, totalOperations: 1 } }
-  );
+      { $unwind: '$sites' },
+    ];
 
-  return this.chargementDechargementModel.aggregate(pipeline);
-}
+    if (siteId) {
+      pipeline.push({ $match: { 'sites._id': new Types.ObjectId(siteId) } });
+    }
 
-async getRankingBySiteAndMonth(
-  companyId: string,
-  year: number,
-  month: number,
-  siteId?: string,
-) {
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59);
-
-  const pipeline: any[] = [
-    {
-      $match: {
-        company: new Types.ObjectId(companyId),
-        createdAt: { $gte: startDate, $lte: endDate },
+    pipeline.push(
+      {
+        $addFields: {
+          chiffreAffaire: { $multiply: ['$tonnage', '$sites.prix_tonne'] },
+          siteName: '$sites.nom_site',
+          siteId: '$sites._id',
+          jour: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        },
       },
-    },
-    // Associer le site
-    {
-      $lookup: {
-        from: 'sites',
-        localField: 'company',
-        foreignField: 'company',
-        as: 'siteInfo',
+      {
+        $group: {
+          _id: { siteId: '$siteId', jour: '$jour' },
+          siteName: { $first: '$siteName' },
+          totalChiffreAffaire: { $sum: '$chiffreAffaire' },
+          totalTonnage: { $sum: '$tonnage' },
+          totalOperations: { $sum: 1 },
+        },
       },
-    },
-    { $unwind: '$siteInfo' },
-  ];
+      {
+        $project: {
+          _id: 0,
+          siteId: '$_id.siteId',
+          siteName: 1,
+          jour: '$_id.jour',
+          totalChiffreAffaire: 1,
+          totalTonnage: 1,
+          totalOperations: 1,
+        },
+      },
+    );
 
-  // Si un siteId est passé → on filtre
-  if (siteId) {
-    pipeline.push({
-      $match: { 'siteInfo._id': new Types.ObjectId(siteId) },
-    });
+    return this.chargementDechargementModel.aggregate(pipeline);
   }
 
-  pipeline.push(
-    // Calcul du chiffre d’affaires
-    {
-      $addFields: {
-        chiffreAffaire: { $multiply: ['$tonnage', '$siteInfo.prix_tonne'] },
-        jour: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-      },
-    },
-    // Groupement par chauffeur
-    {
-      $group: {
-        _id: '$driver',
-        totalTonnage: { $sum: '$tonnage' },
-        totalOperations: { $sum: 1 },
-        totalChiffreAffaire: { $sum: '$chiffreAffaire' },
-        joursTravail: { $addToSet: '$jour' },
-      },
-    },
-    {
-      $addFields: {
-        nombreJoursTravail: { $size: '$joursTravail' },
-        // 👉 absences basées sur 22 jours ouvrés (à adapter si besoin)
-        nombreAbsences: { $subtract: [22, { $size: '$joursTravail' }] },
-      },
-    },
-    // Ajouter infos chauffeur
-    {
-      $lookup: {
-        from: 'users',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'driverInfo',
-      },
-    },
-    { $unwind: '$driverInfo' },
-    {
-      $project: {
-        _id: 0,
-        driverId: '$driverInfo._id',
-        nom: '$driverInfo.lastName',
-        prenom: '$driverInfo.firstName',
-        totalTonnage: 1,
-        totalOperations: 1,
-        totalChiffreAffaire: 1,
-        nombreJoursTravail: 1,
-        nombreAbsences: 1,
-      },
-    },
-    { $sort: { totalChiffreAffaire: -1 } } // Classement par CA décroissant
-  );
+  async getProductionByMonth(
+    companyId: string,
+    year: number,
+    month: number,
+    siteId?: string,
+    day?: string, // nouveau paramètre
+  ) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
 
-  return this.chargementDechargementModel.aggregate(pipeline);
-}
+    const match: any = {
+      company: new Types.ObjectId(companyId),
+      createdAt: { $gte: startDate, $lte: endDate },
+    };
 
+    if (day) {
+      const dayStart = new Date(day + 'T00:00:00');
+      const dayEnd = new Date(day + 'T23:59:59');
+      match.createdAt = { $gte: dayStart, $lte: dayEnd };
+    }
 
+    const pipeline: any[] = [
+      { $match: match },
+      {
+        $lookup: {
+          from: 'sites',
+          localField: 'company',
+          foreignField: 'company',
+          as: 'sites',
+        },
+      },
+      { $unwind: '$sites' },
+    ];
 
+    if (siteId) {
+      pipeline.push({
+        $match: { 'sites._id': new Types.ObjectId(siteId) },
+      });
+    }
+
+    pipeline.push(
+      {
+        $addFields: {
+          jour: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        },
+      },
+      {
+        $group: {
+          _id: { siteId: '$sites._id', jour: '$jour' },
+          siteName: { $first: '$sites.nom_site' },
+          totalTonnage: { $sum: '$tonnage' },
+          totalOperations: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          siteId: '$_id.siteId',
+          siteName: 1,
+          jour: '$_id.jour',
+          totalTonnage: 1,
+          totalOperations: 1,
+        },
+      },
+    );
+
+    return this.chargementDechargementModel.aggregate(pipeline);
+  }
+  async getRankingBySiteAndMonth(
+    companyId: string,
+    year: number,
+    month: number,
+    siteId?: string,
+    day?: string,
+  ) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    const match: any = {
+      company: new Types.ObjectId(companyId),
+      createdAt: { $gte: startDate, $lte: endDate },
+    };
+
+    if (day) {
+      const dayStart = new Date(day + 'T00:00:00');
+      const dayEnd = new Date(day + 'T23:59:59');
+      match.createdAt = { $gte: dayStart, $lte: dayEnd };
+    }
+
+    const pipeline: any[] = [
+      { $match: match },
+      {
+        $lookup: {
+          from: 'sites',
+          localField: 'company',
+          foreignField: 'company',
+          as: 'siteInfo',
+        },
+      },
+      { $unwind: '$siteInfo' },
+    ];
+
+    if (siteId) {
+      pipeline.push({ $match: { 'siteInfo._id': new Types.ObjectId(siteId) } });
+    }
+
+    pipeline.push(
+      {
+        $addFields: {
+          chiffreAffaire: { $multiply: ['$tonnage', '$siteInfo.prix_tonne'] },
+          jour: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        },
+      },
+      {
+        $group: {
+          _id: '$driver',
+          totalTonnage: { $sum: '$tonnage' },
+          totalOperations: { $sum: 1 },
+          totalChiffreAffaire: { $sum: '$chiffreAffaire' },
+          joursTravail: { $addToSet: '$jour' },
+        },
+      },
+      {
+        $addFields: {
+          nombreJoursTravail: { $size: '$joursTravail' },
+          nombreAbsences: { $subtract: [22, { $size: '$joursTravail' }] },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'driverInfo',
+        },
+      },
+      { $unwind: '$driverInfo' },
+      {
+        $project: {
+          _id: 0,
+          driverId: '$driverInfo._id',
+          nom: '$driverInfo.lastName',
+          prenom: '$driverInfo.firstName',
+          totalTonnage: 1,
+          totalOperations: 1,
+          totalChiffreAffaire: 1,
+          nombreJoursTravail: 1,
+          nombreAbsences: 1,
+          joursTravail: 1,
+        },
+      },
+      { $sort: { totalChiffreAffaire: -1 } },
+    );
+
+    return this.chargementDechargementModel.aggregate(pipeline);
+  }
 }

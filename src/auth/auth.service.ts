@@ -20,6 +20,8 @@ export class AuthService {
   }
 
  async login(user: any) {
+  console.log(await bcrypt.compare("5XuX9pfZd&Fr", "$2b$12$uAZk9Z0cBpoP4/8WnqGiYOUEk/3KoEHOmVmm1znfN5n/vBgSwQPay"));
+
   const payload = { 
     email: user.email, 
     sub: user._id, 
@@ -30,7 +32,7 @@ export class AuthService {
   };
 
   const accessToken = this.jwtService.sign(payload, {
-    expiresIn: '15m',
+    expiresIn: '10h',
   });
 
   const refreshToken = this.jwtService.sign(

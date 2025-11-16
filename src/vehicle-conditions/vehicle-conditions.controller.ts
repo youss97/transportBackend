@@ -28,6 +28,7 @@ import {
   VehicleCondition,
 } from 'src/schemas/vehicle-conditions.schema';
 import { UpdateConditionStatusDto } from 'src/schemas/update-conditions-status.dto';
+import { CurrentCompany } from 'src/decorators/company.decorator';
 
 @ApiTags('vehicle-conditions')
 @Controller('vehicle-conditions')
@@ -68,6 +69,19 @@ export class VehicleConditionsController {
   })
   async getLatestCondition(@CurrentUser() req: any) {
     return this.service.getLatestConditionForCurrentUser(req);
+  }
+
+  @Get('company/all')
+  @ApiOperation({
+    summary: 'Get all vehicle conditions for the current company',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of vehicle conditions',
+    type: [VehicleCondition],
+  })
+  async getAllByCompany(@CurrentCompany() companyId: string) {
+    return this.service.getConditionsByCompany(companyId);
   }
 
   @Patch(':id/status')

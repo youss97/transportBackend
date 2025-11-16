@@ -56,12 +56,26 @@ export class PointageService {
       .populate('company') // Peupler la clé étrangère 'company' avec les informations associées
       .exec();
   }
-  async findAllByCompanyId(companyId: string): Promise<Pointage[]> {
+  async findAllByCompanyId(
+    companyId: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<Pointage[]> {
+    const filter: any = {
+      company: new Types.ObjectId(companyId),
+    };
+
+    if (startDate && endDate) {
+      filter.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+
     return this.pointageModel
-      .find({
-        company: new Types.ObjectId(companyId),
-      })
+      .find(filter)
       .sort({ createdAt: -1 })
+      .populate('driver', 'firstName lastName email')
       .exec();
   }
 
@@ -148,103 +162,102 @@ export class PointageService {
       .exec();
   }
   async getMonthlyReportByDriver(
-  userId: string,
-  companyId: string,
-  year: number,
-  month: number,
-  siteId?: string, // ✅ optionnel
-) {
-  // Récupérer les paramètres de la société
-  const companySettings = await this.companySettingsModel
-    .findOne({ companyId })
-    .exec();
-  if (!companySettings) {
-    throw new NotFoundException('Paramètres de la société introuvables');
-  }
-
-  const { workStartHour, workEndHour, totalBreakHours } = companySettings;
-
-  const monthStart = moment
-    .utc({ year, month: month - 1, day: 1 })
-    .startOf('day')
-    .toDate();
-  const monthEnd = moment
-    .utc({ year, month: month - 1 })
-    .endOf('month')
-    .endOf('day')
-    .toDate();
-
-  // ✅ Construire le filtre
-  const filter: any = {
-    driver: new Types.ObjectId(userId),
-    createdAt: { $gte: monthStart, $lte: monthEnd },
-  };
-
-  if (siteId ) {
-    filter.site = new Types.ObjectId(siteId); // ✅ Filtrer par site si présent
-  }
-
-  const pointages = await this.pointageModel
-    .find(filter)
-    .sort({ createdAt: 1 })
-    .exec();
-
-  const daysInMonth = moment(monthStart).daysInMonth();
-  const report = [];
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const currentDate = moment
-      .utc({ year, month: month - 1, day })
-      .startOf('day');
-
-    const pointage = pointages.find((p) =>
-      moment(p.createdAt).utc().isSame(currentDate, 'day'),
-    );
-
-    if (pointage) {
-      const isLate =
-        pointage.pointageDebut &&
-        moment(pointage.pointageDebut).isAfter(
-          moment(currentDate).set({
-            hour: parseInt(workStartHour.split(':')[0], 10),
-            minute: parseInt(workStartHour.split(':')[1], 10),
-          }),
-        );
-
-      const isAbsent = !pointage.pointageDebut;
-
-      report.push({
-        date: currentDate.format('YYYY-MM-DD'),
-        heureDebut: pointage.pointageDebut
-          ? moment(pointage.pointageDebut).format('HH:mm')
-          : null,
-        heureFin: pointage.pointageFin
-          ? moment(pointage.pointageFin).format('HH:mm')
-          : null,
-        absence: isAbsent,
-        retard: !isAbsent && isLate,
-        tempsTravail:
-          pointage.pointageDebut && pointage.pointageFin
-            ? moment(pointage.pointageFin).diff(
-                moment(pointage.pointageDebut),
-                'hours',
-                true,
-              ) - (totalBreakHours || 0)
-            : 0,
-      });
-    } else {
-      report.push({
-        date: currentDate.format('YYYY-MM-DD'),
-        heureDebut: null,
-        heureFin: null,
-        absence: true,
-        retard: false,
-        tempsTravail: 0,
-      });
+    userId: string,
+    companyId: string,
+    year: number,
+    month: number,
+    siteId?: string, // ✅ optionnel
+  ) {
+    // Récupérer les paramètres de la société
+    const companySettings = await this.companySettingsModel
+      .findOne({ companyId })
+      .exec();
+    if (!companySettings) {
+      throw new NotFoundException('Paramètres de la société introuvables');
     }
+
+    const { workStartHour, workEndHour, totalBreakHours } = companySettings;
+
+    const monthStart = moment
+      .utc({ year, month: month - 1, day: 1 })
+      .startOf('day')
+      .toDate();
+    const monthEnd = moment
+      .utc({ year, month: month - 1 })
+      .endOf('month')
+      .endOf('day')
+      .toDate();
+
+    // ✅ Construire le filtre
+    const filter: any = {
+      driver: new Types.ObjectId(userId),
+      createdAt: { $gte: monthStart, $lte: monthEnd },
+    };
+
+    if (siteId) {
+      filter.site = new Types.ObjectId(siteId); // ✅ Filtrer par site si présent
+    }
+
+    const pointages = await this.pointageModel
+      .find(filter)
+      .sort({ createdAt: 1 })
+      .exec();
+
+    const daysInMonth = moment(monthStart).daysInMonth();
+    const report = [];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = moment
+        .utc({ year, month: month - 1, day })
+        .startOf('day');
+
+      const pointage = pointages.find((p) =>
+        moment(p.createdAt).utc().isSame(currentDate, 'day'),
+      );
+
+      if (pointage) {
+        const isLate =
+          pointage.pointageDebut &&
+          moment(pointage.pointageDebut).isAfter(
+            moment(currentDate).set({
+              hour: parseInt(workStartHour.split(':')[0], 10),
+              minute: parseInt(workStartHour.split(':')[1], 10),
+            }),
+          );
+
+        const isAbsent = !pointage.pointageDebut;
+
+        report.push({
+          date: currentDate.format('YYYY-MM-DD'),
+          heureDebut: pointage.pointageDebut
+            ? moment(pointage.pointageDebut).format('HH:mm')
+            : null,
+          heureFin: pointage.pointageFin
+            ? moment(pointage.pointageFin).format('HH:mm')
+            : null,
+          absence: isAbsent,
+          retard: !isAbsent && isLate,
+          tempsTravail:
+            pointage.pointageDebut && pointage.pointageFin
+              ? moment(pointage.pointageFin).diff(
+                  moment(pointage.pointageDebut),
+                  'hours',
+                  true,
+                ) - (totalBreakHours || 0)
+              : 0,
+        });
+      } else {
+        report.push({
+          date: currentDate.format('YYYY-MM-DD'),
+          heureDebut: null,
+          heureFin: null,
+          absence: true,
+          retard: false,
+          tempsTravail: 0,
+        });
+      }
+    }
+
+    return report;
   }
-
-  return report;
-}
-
 }

@@ -20,9 +20,9 @@ export class VehicleConditionsService {
 
   // Méthode pour créer une condition et initialiser son statut à 'pending'
   async createConditionFromDriver(currentUser: any, files: any) {
-    const vehicle = await this.vehicleModel.findOne({
-      currentDriver: currentUser.userId,
-    });
+  const vehicle = await this.vehicleModel.findOne({
+    currentDrivers: { $in: [new Types.ObjectId(currentUser.userId)] },
+  });
     if (!vehicle) {
       throw new NotFoundException('No vehicle assigned to this driver.');
     }
@@ -49,32 +49,34 @@ export class VehicleConditionsService {
   }
 
   // Méthode pour obtenir la dernière condition d'un véhicule pour un conducteur
-  async getLatestConditionForCurrentUser(
-    currentUser: any,
-  ): Promise<VehicleCondition> {
-    const vehicle = await this.vehicleModel.findOne({
-      currentDriver: currentUser.userId,
-    });
-    if (!vehicle) {
-      throw new NotFoundException('No vehicle assigned to this driver.');
-    }
+async getLatestConditionForCurrentUser(currentUser: any): Promise<VehicleCondition> {
+  console.log('Current User:', currentUser);
 
-    const latestCondition = await this.conditionModel
-      .findOne({
-        driverId: new Types.ObjectId(currentUser.userId),
-        vehicleId: vehicle._id,
-      })
-      .sort({ createdAt: -1 })
-      .exec();
+  const vehicle = await this.vehicleModel.findOne({
+    currentDrivers: { $in: [new Types.ObjectId(currentUser.userId)] },
+  });
 
-    if (!latestCondition) {
-      throw new NotFoundException(
-        'No vehicle condition found for this driver and vehicle.',
-      );
-    }
-
-    return latestCondition;
+  if (!vehicle) {
+    throw new NotFoundException('No vehicle assigned to this driver.');
   }
+
+  const latestCondition = await this.conditionModel
+    .findOne({
+      driverId: new Types.ObjectId(currentUser.userId),
+      vehicleId: vehicle._id,
+    })
+    .sort({ createdAt: -1 })
+    .exec();
+
+  if (!latestCondition) {
+    throw new NotFoundException(
+      'No vehicle condition found for this driver and vehicle.',
+    );
+  }
+
+  return latestCondition;
+}
+
 
   // Méthode pour changer le statut de la condition
   async changeStatus(
@@ -122,4 +124,29 @@ export class VehicleConditionsService {
 
     return conditions;
   }
+
+  async getConditionsByCompany(companyId: string): Promise<VehicleCondition[]> {
+  const vehicles = await this.vehicleModel.find({ company: companyId }).select('_id');
+
+  if (!vehicles || vehicles.length === 0) {
+    throw new NotFoundException('No vehicles found for this company.');
+  }
+
+  const vehicleIds = vehicles.map(v => v._id);
+
+  // Récupérer toutes les conditions liées à ces véhicules
+  const conditions = await this.conditionModel
+    .find({ vehicleId: { $in: vehicleIds } })
+    .populate('driverId')
+    .populate('vehicleId')
+    .sort({ createdAt: -1 })
+    .exec();
+
+  if (!conditions || conditions.length === 0) {
+    throw new NotFoundException('No vehicle conditions found for this company.');
+  }
+
+  return conditions;
+}
+
 }

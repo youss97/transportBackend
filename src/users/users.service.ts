@@ -71,7 +71,7 @@ export class UsersService {
       ...createUserDto,
       password: hashedPassword,
       company: companyId,
-      photo: photoUrl, // Ajouter l'URL de la photo
+      photo: photoUrl,
     });
 
     return user.save();

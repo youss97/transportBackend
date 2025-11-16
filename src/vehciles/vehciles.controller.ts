@@ -69,6 +69,7 @@ export class VehiclesController {
       technicalControlFile?: Express.Multer.File[];
     },
   ) {
+    console.log(companyId,'caompanyId')
     return this.vehiclesService.create(createVehicleDto, files, companyId);
   }
 

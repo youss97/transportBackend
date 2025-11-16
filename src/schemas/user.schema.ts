@@ -26,6 +26,9 @@ export class User extends Document {
   phone: string;
   @Prop()
   birthDate: string;
+
+  @Prop()
+  cin: string;
   @Prop()
   address: string;
 
@@ -44,7 +47,7 @@ export class User extends Document {
   // Nouveau champ pour la photo de l'utilisateur
   @Prop({ default: null })
   photo: string;
-  
+
   @Prop({ default: null })
   refreshToken?: string;
 }

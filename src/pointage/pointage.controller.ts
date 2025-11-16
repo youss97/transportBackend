@@ -99,11 +99,16 @@ export class PointageController {
     return this.pointageService.findAll();
   }
 
-  @Get('by-company')
-  @ApiOperation({ summary: "les pointages des utilisateurs d'une societe" })
-  async findAllByCompanyId(@CurrentCompany() companyId: any) {
-    return this.pointageService.findAllByCompanyId(companyId);
-  }
+@Get('by-company')
+@ApiOperation({ summary: "Les pointages des utilisateurs d'une société (filtrable par date)" })
+async findAllByCompanyId(
+  @CurrentCompany() companyId: string,
+  @Query('startDate') startDate?: string,
+  @Query('endDate') endDate?: string,
+) {
+  return this.pointageService.findAllByCompanyId(companyId, startDate, endDate);
+}
+
   @Get(':id')
   @ApiOperation({ summary: 'activity by id' })
   async findOne(@Param('id') id: string, @Request() req) {

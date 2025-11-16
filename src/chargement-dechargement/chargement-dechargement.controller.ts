@@ -221,55 +221,70 @@ export class ChargementDechargementController {
       Number(month),
     );
   }
- @Get('report/revenue/:year/:month')
-@ApiOperation({ summary: 'Chiffre d’affaires par site pour le mois (optionnel: siteId)' })
+  //one
+@Get('report/revenue/:year/:month')
+@ApiOperation({ summary: 'Chiffre d’affaires par site pour le mois (optionnel: siteId, day)' })
 @ApiQuery({ name: 'siteId', required: false, type: String })
+@ApiQuery({ name: 'day', required: false, type: String })
 async getRevenue(
   @CurrentCompany() companyId: string,
   @Param('year') year: number,
   @Param('month') month: number,
   @Query('siteId') siteId?: string,
+  @Query('day') day?: string,
 ) {
   return this.chargementDechargementService.getRevenueByMonth(
     companyId,
     Number(year),
     Number(month),
     siteId,
+    day,
   );
 }
 
+
+//two
 @Get('report/production/:year/:month')
-@ApiOperation({ summary: 'Production de tonnes par site pour le mois (optionnel: siteId)' })
+@ApiOperation({ summary: 'Production de tonnes par site pour le mois (optionnel: siteId, day)' })
 @ApiQuery({ name: 'siteId', required: false, type: String })
+@ApiQuery({ name: 'day', required: false, type: String, description: 'Filtrer par jour au format YYYY-MM-DD' })
 async getProduction(
   @CurrentCompany() companyId: string,
   @Param('year') year: number,
   @Param('month') month: number,
   @Query('siteId') siteId?: string,
+  @Query('day') day?: string,
 ) {
   return this.chargementDechargementService.getProductionByMonth(
     companyId,
     Number(year),
     Number(month),
     siteId,
+    day,
   );
 }
 
+
+//One
 @Get('ranking/:year/:month')
-@ApiOperation({ summary: 'Classement des chauffeurs par site et par mois' })
+@ApiOperation({ summary: 'Classement des chauffeurs par site et par mois (optionnel: siteId, day)' })
 @ApiQuery({ name: 'siteId', required: false, type: String })
+@ApiQuery({ name: 'day', required: false, type: String })
 async getRanking(
   @CurrentCompany() companyId: string,
   @Param('year') year: number,
   @Param('month') month: number,
   @Query('siteId') siteId?: string,
+  @Query('day') day?: string,
 ) {
   return this.chargementDechargementService.getRankingBySiteAndMonth(
     companyId,
     Number(year),
     Number(month),
     siteId,
+    day,
   );
 }
+
 
 }
