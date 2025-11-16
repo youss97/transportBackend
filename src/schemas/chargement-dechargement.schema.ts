@@ -30,8 +30,8 @@ export class ChargmentDechargement {
   photo: string;
 
   @Prop({ type: String })
-  balancePhoto: string; 
-
+  balancePhoto: string; // Nouveau champ pour la photo de balance
+  // ✅ Nouveau champ
   @Prop({ type: Number, required: false })
   tonnage: number;
 }

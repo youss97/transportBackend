@@ -20,11 +20,11 @@ export class VehicleConditionsService {
 
   // Méthode pour créer une condition et initialiser son statut à 'pending'
   async createConditionFromDriver(currentUser: any, files: any) {
-  const vehicle = await this.vehicleModel.findOne({
-    currentDrivers: { $in: [new Types.ObjectId(currentUser.userId)] },
-  });
+    const vehicle = await this.vehicleModel.findOne({
+      currentDrivers: { $in: [new Types.ObjectId(currentUser.userId)] },
+    });
     if (!vehicle) {
-      throw new NotFoundException('No vehicle assigned to this driver.');
+      throw new NotFoundException('No vehicle assigned to this driverrrr.');
     }
 
     const uploaded = {};
@@ -49,16 +49,18 @@ export class VehicleConditionsService {
   }
 
   // Méthode pour obtenir la dernière condition d'un véhicule pour un conducteur
-async getLatestConditionForCurrentUser(currentUser: any): Promise<VehicleCondition> {
-  console.log('Current User:', currentUser);
+  async getLatestConditionForCurrentUser(
+    currentUser: any,
+  ): Promise<VehicleCondition> {
+    console.log('Current User:', currentUser);
 
-  const vehicle = await this.vehicleModel.findOne({
-    currentDrivers: { $in: [new Types.ObjectId(currentUser.userId)] },
-  });
+    const vehicle = await this.vehicleModel.findOne({
+      currentDrivers: { $in: [new Types.ObjectId(currentUser.userId)] },
+    });
 
-  if (!vehicle) {
-    throw new NotFoundException('No vehicle assigned to this driver.');
-  }
+    if (!vehicle) {
+      throw new NotFoundException('No vehicle assigned to this driverrr.');
+    }
 
   const latestCondition = await this.conditionModel
     .findOne({
@@ -68,11 +70,11 @@ async getLatestConditionForCurrentUser(currentUser: any): Promise<VehicleConditi
     .sort({ createdAt: -1 })
     .exec();
 
-  if (!latestCondition) {
-    throw new NotFoundException(
-      'No vehicle condition found for this driver and vehicle.',
-    );
-  }
+    if (!latestCondition) {
+      throw new NotFoundException(
+        'No vehicle condition found for this driver and vehiclee.',
+      );
+    }
 
   return latestCondition;
 }

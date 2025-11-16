@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsDateString, IsMongoId, IsNumber, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsDateString,
+  IsMongoId,
+  IsNumber,
+  Min,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -49,10 +56,10 @@ export class CreateChargementDechargementDto {
   @emptyToUndefined()
   balancePhoto?: string; // Nouveau champ pour la photo de balance
 
-@Transform(({ value }) => parseFloat(value))
-@Type(() => Number)
-@IsNumber()
-@Min(0)
-@IsOptional()
-tonnage: number;
+  @Transform(({ value }) => parseFloat(value))
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  tonnage: number;
 }
