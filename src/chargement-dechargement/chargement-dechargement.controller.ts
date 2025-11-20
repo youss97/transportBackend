@@ -11,7 +11,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
-  Query
+  Query,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ChargementDechargementService } from './chargement-dechargement.service';
@@ -28,7 +28,7 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { UpdateChargementDechargementDto } from 'src/schemas/update-chargement-dechargement.dto';
 import { CurrentUser } from 'src/decorators/current-user.decorator';
-import {  Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { CurrentCompany } from 'src/decorators/company.decorator';
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from 'src/enums/user-role.enum';
@@ -111,6 +111,17 @@ export class ChargementDechargementController {
   async findAllByCompanyId(@CurrentCompany() companyId: any) {
     return this.chargementDechargementService.findAllByCompanyId(companyId);
   }
+
+  @Get('by-driver/:driverId')
+  async getByDriver(
+    @Param('driverId') driverId: string,
+    @Query('date') date: string, // on attend un string ISO
+  ) {
+    const parsedDate = new Date(date);
+
+    return this.chargementDechargementService.findByDriverAndDate(driverId, parsedDate);
+  }
+
   @Get('me')
   @ApiOperation({ summary: 'Récupérer mes chargements/déchargements' })
   async findAll(@CurrentUser() user: any) {
@@ -222,69 +233,79 @@ export class ChargementDechargementController {
     );
   }
   //one
-@Get('report/revenue/:year/:month')
-@ApiOperation({ summary: 'Chiffre d’affaires par site pour le mois (optionnel: siteId, day)' })
-@ApiQuery({ name: 'siteId', required: false, type: String })
-@ApiQuery({ name: 'day', required: false, type: String })
-async getRevenue(
-  @CurrentCompany() companyId: string,
-  @Param('year') year: number,
-  @Param('month') month: number,
-  @Query('siteId') siteId?: string,
-  @Query('day') day?: string,
-) {
-  return this.chargementDechargementService.getRevenueByMonth(
-    companyId,
-    Number(year),
-    Number(month),
-    siteId,
-    day,
-  );
-}
+  @Get('report/revenue/:year/:month')
+  @ApiOperation({
+    summary:
+      'Chiffre d’affaires par site pour le mois (optionnel: siteId, day)',
+  })
+  @ApiQuery({ name: 'siteId', required: false, type: String })
+  @ApiQuery({ name: 'day', required: false, type: String })
+  async getRevenue(
+    @CurrentCompany() companyId: string,
+    @Param('year') year: number,
+    @Param('month') month: number,
+    @Query('siteId') siteId?: string,
+    @Query('day') day?: string,
+  ) {
+    return this.chargementDechargementService.getRevenueByMonth(
+      companyId,
+      Number(year),
+      Number(month),
+      siteId,
+      day,
+    );
+  }
 
+  //two
+  @Get('report/production/:year/:month')
+  @ApiOperation({
+    summary:
+      'Production de tonnes par site pour le mois (optionnel: siteId, day)',
+  })
+  @ApiQuery({ name: 'siteId', required: false, type: String })
+  @ApiQuery({
+    name: 'day',
+    required: false,
+    type: String,
+    description: 'Filtrer par jour au format YYYY-MM-DD',
+  })
+  async getProduction(
+    @CurrentCompany() companyId: string,
+    @Param('year') year: number,
+    @Param('month') month: number,
+    @Query('siteId') siteId?: string,
+    @Query('day') day?: string,
+  ) {
+    return this.chargementDechargementService.getProductionByMonth(
+      companyId,
+      Number(year),
+      Number(month),
+      siteId,
+      day,
+    );
+  }
 
-//two
-@Get('report/production/:year/:month')
-@ApiOperation({ summary: 'Production de tonnes par site pour le mois (optionnel: siteId, day)' })
-@ApiQuery({ name: 'siteId', required: false, type: String })
-@ApiQuery({ name: 'day', required: false, type: String, description: 'Filtrer par jour au format YYYY-MM-DD' })
-async getProduction(
-  @CurrentCompany() companyId: string,
-  @Param('year') year: number,
-  @Param('month') month: number,
-  @Query('siteId') siteId?: string,
-  @Query('day') day?: string,
-) {
-  return this.chargementDechargementService.getProductionByMonth(
-    companyId,
-    Number(year),
-    Number(month),
-    siteId,
-    day,
-  );
-}
-
-
-//One
-@Get('ranking/:year/:month')
-@ApiOperation({ summary: 'Classement des chauffeurs par site et par mois (optionnel: siteId, day)' })
-@ApiQuery({ name: 'siteId', required: false, type: String })
-@ApiQuery({ name: 'day', required: false, type: String })
-async getRanking(
-  @CurrentCompany() companyId: string,
-  @Param('year') year: number,
-  @Param('month') month: number,
-  @Query('siteId') siteId?: string,
-  @Query('day') day?: string,
-) {
-  return this.chargementDechargementService.getRankingBySiteAndMonth(
-    companyId,
-    Number(year),
-    Number(month),
-    siteId,
-    day,
-  );
-}
-
-
+  //One
+  @Get('ranking/:year/:month')
+  @ApiOperation({
+    summary:
+      'Classement des chauffeurs par site et par mois (optionnel: siteId, day)',
+  })
+  @ApiQuery({ name: 'siteId', required: false, type: String })
+  @ApiQuery({ name: 'day', required: false, type: String })
+  async getRanking(
+    @CurrentCompany() companyId: string,
+    @Param('year') year: number,
+    @Param('month') month: number,
+    @Query('siteId') siteId?: string,
+    @Query('day') day?: string,
+  ) {
+    return this.chargementDechargementService.getRankingBySiteAndMonth(
+      companyId,
+      Number(year),
+      Number(month),
+      siteId,
+      day,
+    );
+  }
 }

@@ -45,9 +45,9 @@ export class ChargementDechargementService {
   async findAll(): Promise<ChargmentDechargement[]> {
     return this.chargementDechargementModel
       .find()
-      .sort({ createdAt: -1 }) // Tri par date de création
-      .populate('driver') // Peupler la clé étrangère 'driver' avec les informations associées
-      .populate('company') // Peupler la clé étrangère 'company' avec les informations associées
+      .sort({ createdAt: -1 })
+      .populate('driver')
+      .populate('company') 
       .exec();
   }
   async findAllByCompanyId(
@@ -55,7 +55,25 @@ export class ChargementDechargementService {
   ): Promise<ChargmentDechargement[]> {
     return this.chargementDechargementModel
       .find({ company: new Types.ObjectId(companyId) })
+      .populate('driver')
+      .populate('company')
       .sort({ createdAt: -1 })
+      .exec();
+  }
+  async findByDriverAndDate(driverId: string, date: Date) {
+    // On définit le début et la fin de la journée
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return this.chargementDechargementModel
+      .find({
+        driver: new Types.ObjectId(driverId),
+        chargement: { $gte: startOfDay, $lte: endOfDay },
+      })
+      .sort({ chargement: 1 })
       .exec();
   }
 
