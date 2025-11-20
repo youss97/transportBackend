@@ -62,8 +62,9 @@ export class DocumentsController {
     @CurrentUser() user: any,
   ) {
     // 🛡 Sécurité sur l'owner
-    const isAdmin = user.roles?.includes('ADMIN');
-    const ownerId = isAdmin ? body.owner || user.userId : user.userId;
+    const isAdmin = user.role === "responsable_administratif";
+     const ownerId = isAdmin ? body.owner || user.userId : user.userId;
+    
 
     return this.documentsService.uploadDocument(
       file,
