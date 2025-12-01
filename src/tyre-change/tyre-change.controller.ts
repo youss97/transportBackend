@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -15,6 +16,7 @@ import {
   ApiParam,
   ApiBody,
   ApiConsumes,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { TyreChangeService } from './tyre-change.service';
 
@@ -25,8 +27,12 @@ import {
 } from '@nestjs/platform-express';
 import { CreateTyreChangeDto } from 'src/schemas/create-tyre-change.dto';
 import { TyreChange } from 'src/schemas/tyre-change.schemas';
+import { CurrentCompany } from 'src/decorators/company.decorator';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @ApiTags('Tyre Change')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('tyre-change')
 export class TyreChangeController {
   constructor(
@@ -98,16 +104,17 @@ async create(
   return this.tyreChangeService.create(dto);
 }
 
-  @Get()
-  @ApiOperation({ summary: 'Lister tous les changements de pneus' })
-  @ApiResponse({
-    status: 200,
-    description: 'Liste des changements de pneus',
-    type: [TyreChange],
-  })
-  async findAll() {
-    return this.tyreChangeService.findAll();
-  }
+@Get()
+@ApiOperation({ summary: 'Lister tous les changements de pneus de la société connectée' })
+@ApiResponse({
+  status: 200,
+  description: 'Liste des changements de pneus',
+  type: [TyreChange],
+})
+async findAll(@CurrentCompany() req: any) {
+  console.log('Current Company ID:', req);
+  return this.tyreChangeService.findAllByCompany(req);
+}
 
   @Get('vehicle/:vehicleId')
   @ApiOperation({

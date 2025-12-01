@@ -55,7 +55,7 @@ export class GazoilService {
   async findAll(companyId: string) {
     return this.gazoilModel
       .find({ companyId })
-      .populate('driverId', 'fullName');
+      .populate('driverId', 'firstName lastName');
   }
 
   async findById(id: string) {

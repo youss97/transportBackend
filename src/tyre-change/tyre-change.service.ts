@@ -5,7 +5,6 @@ import { Model } from 'mongoose';
 import { CreateTyreChangeDto } from 'src/schemas/create-tyre-change.dto';
 import { TyreChange } from 'src/schemas/tyre-change.schemas';
 
-
 @Injectable()
 export class TyreChangeService {
   constructor(
@@ -17,11 +16,24 @@ export class TyreChangeService {
     return created.save();
   }
 
-  async findAll() {
-    return this.tyreChangeModel
-      .find()
-      .populate('driverId vehicleId');
-  }
+async findAllByCompany(companyId: string) {
+  return this.tyreChangeModel
+    .find()
+    .populate({
+      path: 'driverId',
+      match: { company: companyId },
+      select: 'firstName lastName', 
+    })
+    .populate({
+      path: 'vehicleId',
+      match: { company: companyId }, 
+      select: 'licensePlate', 
+    })
+    .then((changes) => {
+      return changes.filter((c) => c.driverId && c.vehicleId);
+    });
+}
+
 
   async findByVehicle(vehicleId: string) {
     return this.tyreChangeModel
