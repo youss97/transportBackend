@@ -19,14 +19,26 @@ export class SitesService {
   }
 
   async findAll(companyId: string) {
-    return this.siteModel.find({ company :companyId }).populate('company').exec();
+    return this.siteModel
+      .find({ company: companyId })
+      .populate('company')
+      .populate('superviseur', 'firstName lastName email')
+      .exec();
   }
   async findAllWithoutCompany() {
-    return this.siteModel.find().populate('company').exec();
+    return this.siteModel
+      .find()
+      .populate('company')
+      .populate('superviseur', 'firstName lastName email')
+      .exec();
   }
 
   async findOne(id: string, companyId: string) {
-    const site = await this.siteModel.findOne({ _id: id, company :companyId }).populate('company').exec();
+    const site = await this.siteModel
+      .findOne({ _id: id, company: companyId })
+      .populate('company')
+      .populate('superviseur', 'firstName lastName email')
+      .exec();
     if (!site) throw new NotFoundException('Site not found');
     return site;
   }

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsEmail } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsEmail, IsOptional, IsMongoId } from 'class-validator';
 
 export class CreateSiteDto {
   @ApiProperty({ example: 'Site de Sfax' })
@@ -40,4 +40,9 @@ export class CreateSiteDto {
   @ApiProperty({ example: 24.5 })
   @IsNumber()
   prix_tonne: number;
+
+  @ApiProperty({ example: '507f1f77bcf86cd799439011', required: false })
+  @IsOptional()
+  @IsMongoId()
+  superviseur?: string;
 }

@@ -27,7 +27,6 @@ export class VehiclesService {
     },
     companyId: string,
   ) {
-    console.log(companyId,"company")
     const fileUrls = {
       carteGriseFile: null,
       insuranceFile: null,

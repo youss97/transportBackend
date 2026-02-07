@@ -33,6 +33,21 @@ export class UpdateUserDto {
   @IsDateString()
   birthDate?: string;
 
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  cin?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  licenseNumber?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  licenseExpirationDate?: string;
+
   // Champ photo ajouté
   @ApiProperty({ required: false, type: 'string', format: 'binary' })
   @IsOptional()

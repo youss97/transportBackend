@@ -70,6 +70,14 @@ getCountsBySite(
   getUnassignedSupervisors() {
     return this.assignmentService.getUnassignedSupervisors();
   }
+
+  @Get('supervisors-with-site')
+  @ApiOperation({
+    summary: 'Lister tous les superviseurs avec leur statut d\'affectation à un site',
+  })
+  getSupervisorsWithSiteAssignment(@CurrentCompany() companyId: any) {
+    return this.assignmentService.getSupervisorsWithSiteAssignment(companyId);
+  }
   @Get(':id')
   @ApiOperation({ summary: 'Afficher une affectation par ID' })
   @ApiParam({ name: 'id', description: 'ID de l’affectation' })

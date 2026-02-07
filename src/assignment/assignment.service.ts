@@ -196,6 +196,41 @@ export class AssignmentService {
       .select('firstName lastName email');
   }
 
+  async getSupervisorsWithSiteAssignment(companyId: Types.ObjectId) {
+    // Récupérer tous les superviseurs de la société
+    const supervisors = await this.userModel
+      .find({
+        company: companyId,
+        role: UserRole.SUPERVISOR,
+      })
+      .select('firstName lastName email')
+      .lean();
+
+    // Récupérer les affectations pour vérifier quels superviseurs sont affectés à un site
+    const assignments = await this.assignmentModel
+      .find({ company: companyId })
+      .populate('site', 'nom_site')
+      .lean();
+
+    // Créer un map des superviseurs avec leur affectation
+    const supervisorMap = supervisors.map((sup) => {
+      const assignment = assignments.find((a) =>
+        a.supervisors.some((s) => s.toString() === sup._id.toString()),
+      );
+
+      return {
+        _id: sup._id,
+        firstName: sup.firstName,
+        lastName: sup.lastName,
+        email: sup.email,
+        isAssignedToSite: !!assignment,
+        assignedSite: assignment ? (assignment.site as any)?.nom_site : null,
+      };
+    });
+
+    return supervisorMap;
+  }
+
   // src/assignment/assignment.service.ts
   async getCountsBySite(companyId: Types.ObjectId, siteId?: string) {
     const match: any = { company: companyId };

@@ -31,6 +31,9 @@ export class Site {
 
   @Prop({ required: true })
   prix_tonne: number;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false })
+  superviseur: Types.ObjectId;
 }
 
 export const SiteSchema = SchemaFactory.createForClass(Site);
